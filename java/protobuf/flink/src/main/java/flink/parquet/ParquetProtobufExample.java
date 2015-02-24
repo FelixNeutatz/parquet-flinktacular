@@ -40,13 +40,7 @@ import java.util.List;
 import flink.parquet.filter.PersonFilter;
 import flink.parquet.proto.AddressBookProtos;
 
-/**
- * Implements a word count which takes the input file and counts the number of
- * occurrences of each word in the file and writes the result back to disk.
- *
- * This example shows how to use Hadoop Input Formats, how to convert Hadoop Writables to 
- * common Java types for better usage in a Flink job and how to use Hadoop Output Formats.
- */
+
 @SuppressWarnings("serial")
 public class ParquetProtobufExample {
 

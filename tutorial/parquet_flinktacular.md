@@ -27,6 +27,102 @@ This document gives a deep-dive into the available transformations on DataSets. 
 Flink Java API, please refer to the [Programming Guide](programming_guide.html)
 
 
+### Flink dependencies
+
+Some text
+
+<div class="codetabs" markdown="1">
+<div data-lang="java" markdown="1">
+
+~~~java
+<dependency>
+	<groupId>org.apache.flink</groupId>
+	<artifactId>flink-clients</artifactId>
+	<version>0.8.1</version>
+</dependency>
+<dependency>
+	<groupId>org.apache.flink</groupId>
+	<artifactId>flink-java</artifactId>
+	<version>0.8.1</version>
+</dependency>
+~~~
+
+</div>
+<div data-lang="scala" markdown="1">
+
+~~~scala
+<dependency>
+	<groupId>org.apache.flink</groupId>
+	<artifactId>flink-clients</artifactId>
+	<version>0.8.1</version>
+</dependency>
+<dependency>
+	<groupId>org.apache.flink</groupId>
+	<artifactId>flink-scala</artifactId>
+	<version>0.8.1</version>
+</dependency>
+~~~
+
+</div>
+</div>
+
+
+### Parquet dependencies
+
+Something
+
+<div class="codetabs" markdown="1">
+<div data-lang="protobuf" markdown="1">
+
+~~~java
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-hadoop</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-protobuf</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+~~~
+
+</div>
+<div data-lang="thrift" markdown="1">
+
+~~~java
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-hadoop</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-thrift</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+~~~
+
+</div>
+<div data-lang="avro" markdown="1">
+
+~~~java
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-hadoop</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-avro</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+~~~
+
+</div>
+</div>
+
+
 ### Write Parquet
 
 Some text

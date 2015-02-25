@@ -29,6 +29,10 @@ import org.apache.flink.api.java.hadoop.mapreduce.HadoopInputFormat;
 import org.apache.flink.api.java.hadoop.mapreduce.HadoopOutputFormat;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import parquet.hadoop.ParquetInputFormat;
+import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.proto.ProtoParquetInputFormat;
 import parquet.proto.ProtoParquetOutputFormat;
@@ -51,7 +55,7 @@ public class ParquetProtobufExample {
         //output
         DataSet<Tuple2<Void,AddressBookProtos.Person>> data = generateDataSet(env);
 
-        writeProtobuf(env, data, "newpath");
+        writeProtobuf(data, "newpath");
         
         data.print();
         
@@ -97,19 +101,17 @@ public class ParquetProtobufExample {
         return data;
     }
 
-    public static void writeProtobuf(ExecutionEnvironment env, DataSet<Tuple2<Void,AddressBookProtos.Person>> data, String outputPath) throws IOException {
-        // Set up the Hadoop Input Format
+    public static void writeProtobuf(DataSet<Tuple2<Void,AddressBookProtos.Person>> data, String outputPath) throws IOException {
         Job job = Job.getInstance();
 
         // Set up Hadoop Output Format
         HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new ProtoParquetOutputFormat(), job);
 
-        ProtoParquetOutputFormat.setOutputPath(job, new Path(outputPath));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         ProtoParquetOutputFormat.setProtobufClass(job, AddressBookProtos.Person.class);
-        ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-        ProtoParquetOutputFormat.setEnableDictionary(job, true);
-
+        ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+        ParquetOutputFormat.setEnableDictionary(job, true);
 
         // Output & Execute
         data.output(hadoopOutputFormat);
@@ -120,7 +122,10 @@ public class ParquetProtobufExample {
 
         HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ProtoParquetInputFormat(), Void.class, AddressBookProtos.Person.Builder.class, job);
 
-        ProtoParquetInputFormat.addInputPath(job, new Path(inputPath));
+        FileInputFormat.addInputPath(job, new Path(inputPath));
+
+        //native predicate push down: read only records which satisfy a given constraint
+        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
 
         //schema projection: don't read type of phone type attribute
         String projection = "message Person {\n" +
@@ -132,9 +137,6 @@ public class ParquetProtobufExample {
                 "  }\n" +
                 "}";
         ProtoParquetInputFormat.setRequestedProjection(job, projection);
-
-        //native predicate push down: read only records which have name = "Felix"
-        ProtoParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
 
         DataSet<Tuple2<Void, AddressBookProtos.Person.Builder>> data = env.createInput(hadoopInputFormat);
 

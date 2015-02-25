@@ -46,7 +46,7 @@ object ParquetProtobufExample {
         //output
         val data = generateDataSet(env)
 
-        writeProtobuf(env, data, "newpath")
+        writeProtobuf(data, "newpath")
         
         data.print()
         
@@ -83,12 +83,12 @@ object ParquetProtobufExample {
         return data
     }
 
-    def writeProtobuf(env:ExecutionEnvironment, data:DataSet[Tuple2[Void,AddressBookProtos.Person]], outputPath:String) {
-        // Set up the Hadoop Input Format
+    def writeProtobuf(data:DataSet[Tuple2[Void,AddressBookProtos.Person]], outputPath:String) {
         val job = Job.getInstance
 
         // Set up Hadoop Output Format
-        val hadoopOutputFormat = new HadoopOutputFormat[Void,AddressBookProtos.Person](new ProtoParquetOutputFormat, job)
+        val parquetFormat = 
+            new HadoopOutputFormat[Void,AddressBookProtos.Person](new ProtoParquetOutputFormat, job)
 
         FileOutputFormat.setOutputPath(job, new Path(outputPath))
 
@@ -97,13 +97,13 @@ object ParquetProtobufExample {
         ParquetOutputFormat.setEnableDictionary(job, true)
 
         // Output & Execute
-        data.output(hadoopOutputFormat.asInstanceOf[OutputFormat[Tuple2[Void,AddressBookProtos.Person]]])
+        data.output(parquetFormat)
     }
 
     def readProtobuf(env:ExecutionEnvironment, inputPath:String): DataSet[Tuple2[Void,AddressBookProtos.Person]] = {
         val job = Job.getInstance
 
-        val hadoopInputFormat = new HadoopInputFormat[Void,AddressBookProtos.Person.Builder](new ProtoParquetInputFormat, classOf[Void], classOf[AddressBookProtos.Person.Builder], job)
+        val parquetFormat = new HadoopInputFormat[Void,AddressBookProtos.Person.Builder](new ProtoParquetInputFormat, classOf[Void], classOf[AddressBookProtos.Person.Builder], job)
 
         FileInputFormat.addInputPath(job, new Path(inputPath))
 
@@ -121,7 +121,7 @@ object ParquetProtobufExample {
         //native predicate push down: read only records which have name = "Felix"
         ParquetInputFormat.setUnboundRecordFilter(job, classOf[PersonFilter])
 
-        val data = env.createInput(hadoopInputFormat)
+        val data = env.createInput(parquetFormat)
 
         return data.asInstanceOf[DataSet[Tuple2[Void,AddressBookProtos.Person]]]
     }

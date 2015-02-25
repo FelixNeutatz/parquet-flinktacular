@@ -29,6 +29,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import parquet.hadoop.ParquetInputFormat;
+import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetInputFormat;
@@ -49,13 +53,12 @@ public class ParquetAvroExample {
 
         //output
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        env.setDegreeOfParallelism(1);
         
         Person person = generateSampleObject();
         
         DataSet<Tuple2<Void,Person>> output = putObjectIntoDataSet(env, person);
 
-        writeAvro(env, output);    
+        writeAvro(output, "newpath");    
         
         output.print();
 
@@ -63,9 +66,8 @@ public class ParquetAvroExample {
 
         //input
         final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-        env.setDegreeOfParallelism(1);
         
-        DataSet<Tuple2<Void,Person>> input = readAvro(env2);
+        DataSet<Tuple2<Void,Person>> input = readAvro(env2, "newpath");
         
         input.print();        
 
@@ -92,45 +94,44 @@ public class ParquetAvroExample {
         return data;
     }
 
-    public static void writeAvro(ExecutionEnvironment env, DataSet<Tuple2<Void,Person>> data) throws IOException {
+    public static void writeAvro(DataSet<Tuple2<Void,Person>> data, String outputPath) throws IOException {
         // Set up the Hadoop Input Format
         Job job = Job.getInstance();
 
         // Set up Hadoop Output Format
         HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new AvroParquetOutputFormat(), job);
 
-        AvroParquetOutputFormat.setOutputPath(job, new Path("newpath"));
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
         AvroParquetOutputFormat.setSchema(job, Person.getClassSchema());
-        AvroParquetOutputFormat.setCompression(job, CompressionCodecName.GZIP);
-        AvroParquetOutputFormat.setEnableDictionary(job, true);
+        ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+        ParquetOutputFormat.setEnableDictionary(job, true);
 
         // Output & Execute
         data.output(hadoopOutputFormat);
     }
     
-    public static DataSet<Tuple2<Void,Person>> readAvro(ExecutionEnvironment env) throws IOException {
+    public static DataSet<Tuple2<Void,Person>> readAvro(ExecutionEnvironment env, String inputPath) throws IOException {
         Job job = Job.getInstance();
 
         HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new AvroParquetInputFormat(), Void.class, Person.class, job);
 
-        AvroParquetInputFormat.addInputPath(job, new Path("newpath"));
+        FileInputFormat.addInputPath(job, new Path(inputPath));
 
-        // schema projection: don't read attributes id and email
-        
+        // schema projection: don't read attributes id and email        
         Schema projection = Schema.createRecord("Person", null, null, false);
         projection.setFields(
                     Arrays.asList(
-                        new Schema.Field("name",Schema.create(Schema.Type.BYTES), null, null)
+                        new Schema.Field("name",Schema.create(Schema.Type.BYTES), null, null),
+                        new Schema.Field("id",Schema.create(Schema.Type.INT), null, null),
+                        new Schema.Field("phone",Schema.create(Schema.Type.BYTES), null, null)    
                     )
                 );
-        
-        
-        
-        //AvroParquetInputFormat.setRequestedProjection(job, projection);
+               
+        AvroParquetInputFormat.setRequestedProjection(job, projection);
 
         // push down predicates: get all persons with name = "Felix"
-        AvroParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
+        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
 
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);

@@ -29,7 +29,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import parquet.hadoop.ParquetInputFormat;
+import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.hadoop.thrift.ParquetThriftOutputFormat;
 import parquet.hadoop.thrift.ParquetThriftInputFormat;
@@ -49,23 +52,21 @@ public class ParquetThriftExample {
     public static void main(String[] args) throws Exception {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        env.setDegreeOfParallelism(1);
-
+        
         //output
         Person person = generateSampleObject();
         
         DataSet<Tuple2<Void,Person>> output = putObjectIntoDataSet(env, person);
 
-        writeThrift(env, output);    
+        writeThrift(output, "newpath");    
         
         output.print();
         
         //input
-        /*
-        DataSet<Tuple2<Void,Person>> input = readThrift(env);
         
-        input.print();*/
+        DataSet<Tuple2<Void,Person>> input = readThrift(env, "newpath");
         
+        input.print();        
 
         env.execute("Word Count"); 
     }
@@ -97,36 +98,36 @@ public class ParquetThriftExample {
         return data;
     }
 
-    public static void writeThrift(ExecutionEnvironment env, DataSet<Tuple2<Void,Person>> data) throws IOException {
+    public static void writeThrift(DataSet<Tuple2<Void,Person>> data, String outputPath) throws IOException {
         // Set up the Hadoop Input Format
         Job job = Job.getInstance();
 
         // Set up Hadoop Output Format
         HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new ParquetThriftOutputFormat(), job);
 
-        ParquetThriftOutputFormat.setOutputPath(job, new Path("newpath"));
-        
+        FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+        ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+        ParquetOutputFormat.setEnableDictionary(job, true);
+
         ParquetThriftOutputFormat.setThriftClass(job, Person.class);
-        ParquetThriftOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-        ParquetThriftOutputFormat.setEnableDictionary(job, true);
 
         // Output & Execute
         data.output(hadoopOutputFormat);
     }
     
-    public static DataSet<Tuple2<Void,Person>> readThrift(ExecutionEnvironment env) throws IOException {
+    public static DataSet<Tuple2<Void,Person>> readThrift(ExecutionEnvironment env, String inputPath) throws IOException {
         Job job = Job.getInstance();
-
-        // schema projection: don't read attributes id and email
-        ParquetInputFormat.setReadSupportClass(job, ThriftReadSupport.class);
-        job.getConfiguration().set("parquet.thrift.column.filter", "name;phone");
 
         HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ParquetThriftInputFormat(), Void.class, Person.class, job);
 
-        ParquetThriftInputFormat.addInputPath(job, new Path("newpath"));
+        // schema projection: don't read attributes id and email
+        job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/number");
+
+        FileInputFormat.addInputPath(job, new Path(inputPath));
 
         // push down predicates: get all persons with name = "Felix"
-        ParquetThriftInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
+        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 

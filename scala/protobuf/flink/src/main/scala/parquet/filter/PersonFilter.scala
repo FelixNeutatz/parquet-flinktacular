@@ -26,6 +26,6 @@ import parquet.filter.UnboundRecordFilter
 
 class PersonFilter extends UnboundRecordFilter {
     def bind(readers: java.lang.Iterable[ColumnReader]): RecordFilter = {
-        ColumnRecordFilter.column("name", ColumnPredicates.equalTo("Felix")).bind(readers)
+        return ColumnRecordFilter.column("name", ColumnPredicates.equalTo("Felix")).bind(readers)
     }
 }

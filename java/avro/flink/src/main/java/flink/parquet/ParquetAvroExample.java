@@ -18,6 +18,7 @@
 
 package flink.parquet;
 
+import com.google.common.collect.Lists;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
@@ -40,6 +41,7 @@ import parquet.avro.AvroParquetInputFormat;
 import org.apache.avro.Schema;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -81,7 +83,10 @@ public class ParquetAvroExample {
         person.id = 42;
         person.name = "Felix";
         
-        person.setPhone("0123456");
+        List<PhoneNumber> pList = new ArrayList<PhoneNumber>();
+        pList.add(new PhoneNumber("123456", PhoneType.WORK));
+        
+        person.setPhone(pList);
         return person;
     }
     
@@ -118,13 +123,22 @@ public class ParquetAvroExample {
 
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
-        // schema projection: don't read attributes id and email        
+        // schema projection: don't read type of phonenumber     
+        Schema phone = Schema.createRecord("PhoneNumber", null, null, false);
+        phone.setFields(Arrays.asList(
+                new Schema.Field("number",Schema.create(Schema.Type.BYTES), null, null)));
+        
+        Schema array = Schema.createArray(phone);
+        Schema union = Schema.createUnion(Lists.newArrayList(Schema.create(Schema.Type.BYTES), Schema.create(Schema.Type.NULL)));
+        
+
         Schema projection = Schema.createRecord("Person", null, null, false);
         projection.setFields(
                     Arrays.asList(
                         new Schema.Field("name",Schema.create(Schema.Type.BYTES), null, null),
                         new Schema.Field("id",Schema.create(Schema.Type.INT), null, null),
-                        new Schema.Field("phone",Schema.create(Schema.Type.BYTES), null, null)    
+                        new Schema.Field("email",union, null, null),
+                        new Schema.Field("phone",array, null, null)    
                     )
                 );
                

@@ -9,13 +9,13 @@ protocol FlinkParquetAvro {
   
   record PhoneNumber {
     string number;
-    union { null, PhoneType } type = "HOME";
+    union { PhoneType, null } type = "HOME";
   }
 
   record Person {
     string name;
     int id;
-    union { null, string } email;
+    union { string, null } email;
     array<PhoneNumber> phone;
   }
 }

@@ -61,6 +61,7 @@ $ mvn clean compile package
 
 There are several ways to define the schema of your data. This tutorial covers three data serialization frameworks:  [Avro](http://avro.apache.org/), [Protocol Buffers (protobuf)](https://github.com/google/protobuf/) and [Thrift](https://thrift.apache.org/).
 
+The example schema is the data of a person who has a name, id, email address and several phone numbers:
 
 <div class="codetabs" markdown="1">
 <div data-lang="protobuf" markdown="1">
@@ -70,22 +71,22 @@ option java_package = "flink.parquet.proto";
 option java_outer_classname = "PersonProto";
 
 message Person {
-  required string name = 1;
-  required int32 id = 2;
-  optional string email = 3;
+    required string name = 1;
+    required int32 id = 2;
+    optional string email = 3;
 
-  enum PhoneType {
-    MOBILE = 0;
-    HOME = 1;
-    WORK = 2;
-  }
+    enum PhoneType {
+        MOBILE = 0;
+        HOME = 1;
+        WORK = 2;
+    }
 
-  message PhoneNumber {
-    required string number = 1;
-    optional PhoneType type = 2 [default = HOME];
-  }
+    message PhoneNumber {
+        required string number = 1;
+        optional PhoneType type = 2 [default = HOME];
+    }
 
-  repeated PhoneNumber phone = 4;
+    repeated PhoneNumber phone = 4;
 }
 ~~~
 
@@ -107,10 +108,10 @@ struct PhoneNumber {
 }
 
 struct Person {
-  1: required string name,
-  2: required i32 id,
-  3: optional string email,
-  4: list<PhoneNumber> phone
+    1: required string name,
+    2: required i32 id,
+    3: optional string email,
+    4: list<PhoneNumber> phone
 }
 ~~~
 
@@ -118,16 +119,27 @@ struct Person {
 <div data-lang="avro" markdown="1">
 
 ~~~
-<dependency>
-	<groupId>com.twitter</groupId>
-	<artifactId>parquet-hadoop</artifactId>
-	<version>1.6.0rc4</version>
-</dependency>
-<dependency>
-	<groupId>com.twitter</groupId>
-	<artifactId>parquet-avro</artifactId>
-	<version>1.6.0rc4</version>
-</dependency>
+@namespace("flink.parquet.avro")
+protocol FlinkParquetAvro {
+
+    enum PhoneType {
+        MOBILE,
+        HOME, 
+        WORK
+    }
+  
+    record PhoneNumber {
+        string number;
+        union { PhoneType, null } type = "HOME";
+    }
+
+    record Person {
+        string name;
+        int id;
+        union { string, null } email;
+        array<PhoneNumber> phone;
+    }
+}
 ~~~
 
 </div>
@@ -307,7 +319,7 @@ val env = ExecutionEnvironment.getExecutionEnvironment
 val job = Job.getInstance
 
 val parquetFormat = new HadoopInputFormat[Void,Person.Builder](
-    new ProtoParquetInputFormat, classOf[Void], classOf[Person.Builder], job)
+        new ProtoParquetInputFormat, classOf[Void], classOf[Person.Builder], job)
 
 FileInputFormat.addInputPath(job, new Path(inputPath))
 
@@ -375,7 +387,7 @@ Something
 <div data-lang="protobuf" markdown="1">
 
 ~~~java
-//schema projection: don't read type of phone type attribute
+//schema projection: don't read phone type attribute
 String projection = "message Person {\n" +
         "  required binary name (UTF8);\n" +
         "  required int32 id;\n" +
@@ -391,7 +403,7 @@ ProtoParquetInputFormat.setRequestedProjection(job, projection);
 <div data-lang="thrift" markdown="1">
 
 ~~~java
-// schema projection: don't read type of phone type attribute
+// schema projection: don't read phone type attribute
 job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/number");
 ~~~
 
@@ -399,13 +411,23 @@ job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/
 <div data-lang="avro" markdown="1">
 
 ~~~java
-// schema projection: don't read attributes id and email
+// schema projection: don't read phone type attribute
+Schema phone = Schema.createRecord("PhoneNumber", null, null, false);
+phone.setFields(Arrays.asList(
+        new Schema.Field("number",Schema.create(Schema.Type.BYTES), null, null)));
+
+Schema array = Schema.createArray(phone);
+Schema union = Schema.createUnion(
+	Lists.newArrayList(Schema.create(Schema.Type.BYTES), Schema.create(Schema.Type.NULL)));
+
+
 Schema projection = Schema.createRecord("Person", null, null, false);
 projection.setFields(
             Arrays.asList(
                 new Schema.Field("name",Schema.create(Schema.Type.BYTES), null, null),
                 new Schema.Field("id",Schema.create(Schema.Type.INT), null, null),
-                new Schema.Field("phone",Schema.create(Schema.Type.BYTES), null, null)    
+                new Schema.Field("email",union, null, null),
+                new Schema.Field("phone",array, null, null)    
             )
         );
        

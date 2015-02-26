@@ -111,7 +111,7 @@ public class ParquetAvroExample {
         AvroParquetOutputFormat.setSchema(job, Person.getClassSchema());
         ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
         ParquetOutputFormat.setEnableDictionary(job, true);
-
+        
         // Output & Execute
         data.output(hadoopOutputFormat);
     }

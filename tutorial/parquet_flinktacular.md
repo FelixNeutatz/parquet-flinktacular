@@ -28,10 +28,13 @@ Flink Java API, please refer to the [Programming Guide](programming_guide.html)
 
 ### Parquet
 
-"[Parquet](http://parquet.incubator.apache.org/) is a columnar storage format for Hadoop that supports complex nested data."
+*"[Parquet](http://parquet.incubator.apache.org/) is a columnar storage format for Hadoop that supports complex nested data."*
 
 Parquet is an open source project. Cloudera and Twitter are the major contributors. The idea for Parquet came from Google. They introduced their system called [Dremel](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36632.pdf)
 which brings the advantages of columnar storage and nested data together. Parquet is implementing this concept in Hadoop. Since Flink provides a seamless integration for Hadoop formats, we can leverage all the advantages of Parquet in Flink.
+
+A [columnar storage format](http://en.wikipedia.org/wiki/Column-oriented_DBMS) brings a lot of advantages. The first one is [schema projection](#schema-projection). This makes it possible to read only those columns which are really needed in your application. Moreover column stores are highly compression friendly. This means compression algorithms work faster and can compress better, because information entropy per column is lower than per row. E.g if you imagine a column `phone number`, the values in this column are really similar. Maybe most of them have even the same area code. This high data value locality allows it to apply all kinds of compression. In Parquet supports GZIP, LZO and SNAPPY. Moreover it is possible to use serveral types of encoding: Bit Packing, Run Length encoding, Dictionary encoding, ...
+Another nice feature of Parquet is the native implementation of [predicate pushdown](#native-predicate-pushdown). This makes it possible to filter records on the lowest level.
 
 ### Getting started
 
@@ -46,7 +49,7 @@ At the moment I provide templates for the following use cases:
 
 Each project has two main folders: __commons__ and __flink__. 
 
-In the __commons__ folder you put your schema definition IDL file. The Maven `commons/pom.xml` is configured to build classes from the IDL file during compilation. This makes development more convenient, because you don't need to recompile the IDL file by hand whenever there is any minor change in your schema.
+In the __commons__ folder you put [your schema definition IDL file](#define-your-schema). The Maven `commons/pom.xml` is configured to build classes from the IDL file during compilation. This makes development more convenient, because you don't need to recompile the IDL file by hand whenever there is any minor change in your schema.
 
 In the __flink__ folder there are your Flink jobs which read and write Parquet.
 
@@ -148,7 +151,7 @@ protocol FlinkParquetAvro {
 
 ### Flink dependencies
 
-Some text
+The Flink dependencies will also imported by the [templates](#getting-started). The one important thing to note here is that Flink supports Parquet since version `0.8.1`.
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -188,7 +191,7 @@ Some text
 
 ### Parquet dependencies
 
-Something
+The Parquet dependencies are also provided by the [templates](#getting-started). But if you want to build your own Maven configuration you will find this interesting:
 
 <div class="codetabs" markdown="1">
 <div data-lang="protobuf" markdown="1">

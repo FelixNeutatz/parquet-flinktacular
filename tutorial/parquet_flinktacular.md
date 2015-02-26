@@ -23,8 +23,8 @@ under the License.
 * This will be replaced by the TOC
 {:toc}
 
-This document gives a deep-dive into the available transformations on DataSets. For a general introduction to the
-Flink Java API, please refer to the [Programming Guide](programming_guide.html)
+This document gives a deep-dive into leveraging Parquet in Flink. For a general introduction to the integration of
+Hadoop Input Formats, please refer to [Hadoop Compatibility](http://flink.apache.org/docs/0.7-incubating/hadoop_compatibility.html)
 
 ### Parquet
 
@@ -33,8 +33,16 @@ Flink Java API, please refer to the [Programming Guide](programming_guide.html)
 Parquet is an open source project. Cloudera and Twitter are the major contributors. The idea for Parquet came from Google. They introduced their system called [Dremel](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36632.pdf)
 which brings the advantages of columnar storage and nested data together. Parquet is implementing this concept in Hadoop. Since Flink provides a seamless integration for Hadoop formats, we can leverage all the advantages of Parquet in Flink.
 
-A [columnar storage format](http://en.wikipedia.org/wiki/Column-oriented_DBMS) brings a lot of advantages. The first one is [schema projection](#schema-projection). This makes it possible to read only those columns which are really needed in your application. Moreover column stores are highly compression friendly. This means compression algorithms work faster and can compress better, because information entropy per column is lower than per row. E.g if you imagine a column `phone number`, the values in this column are really similar. Maybe most of them have even the same area code. This high data value locality allows it to apply all kinds of compression. In Parquet supports GZIP, LZO and SNAPPY. Moreover it is possible to use serveral types of encoding: Bit Packing, Run Length encoding, Dictionary encoding, ...
+A [columnar storage format](http://en.wikipedia.org/wiki/Column-oriented_DBMS) brings a lot of advantages. The first one is [schema projection](#schema-projection). This makes it possible to read only those columns which are really needed in your application. 
+
+Moreover column stores are highly compression friendly. This means compression algorithms work faster and can compress better, because information entropy per column is lower than per row. E.g if you imagine a column `phone number`, the values in this column are really similar. Maybe most of them have even the same area code. This high data value locality allows it to apply all kinds of compression. 
+Parquet supports GZIP, LZO and SNAPPY. 
+
+Moreover it is possible to use serveral types of encoding: Bit Packing, Run Length encoding, Dictionary encoding, ...
 Another nice feature of Parquet is the native implementation of [predicate pushdown](#native-predicate-pushdown). This makes it possible to filter records on the lowest level.
+
+The key differentiating factor in comparison to other columnar store formats is that Parquet allows the user to [define a schema](#define-your-schema) which can be arbitrarily nested.
+
 
 ### Getting started
 
@@ -247,7 +255,10 @@ The Parquet dependencies are also provided by the [templates](#getting-started).
 
 ### Write Parquet
 
-Some text
+Once you have [defined your schema](#define-your-schema) you can generate some objects and put them into a `DataSet<Tuple2<Void,`__YourClass__`>>`. Parquet uses `Void` as key which is just a `null` value. Flink provides the class `HadoopOutputFormat` to write in Hadoop formats. 
+You can set the output path, the compression and the type of encoding. Moreover you have to specify [your schema](#define-your-schema) class.
+
+The following example describes the output of Protobuf objects. For the other data serialization frameworks you can find the corresponding source in the [Github repository](https://github.com/FelixNeutatz/parquet-flinktacular).
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -292,9 +303,16 @@ data.output(parquetFormat)
 </div>
 </div>
 
+
 ### Read Parquet
 
-Some text
+The cool thing about Parquet is that it recognices on its own, which compression and encoding is used in the current file. Therefore you only have to specify the input path and the schema of the data which you want to read.
+
+Moreover you can apply native predicate pushdown by `ParquetInputFormat.setUnboundRecordFilter()`. How to create your custom predicate is described in the [next chapter](#Native-predicate-pushdown). 
+
+You can also leverage schema projection. Schema projection is highly dependent on the serialization framework. This is described in detail in the chapter [schema projection](#Schema-projection).
+
+The following example describes the input of Protobuf objects. For the other data serialization frameworks you can find the corresponding source in the [Github repository](https://github.com/FelixNeutatz/parquet-flinktacular).
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -335,15 +353,16 @@ val data = env.createInput(parquetFormat)
 </div>
 </div>
 
+
 ### Native predicate pushdown
 
-Something
+The easiest type of predicate is an equality predicate. In the example below we accept only those records which have the `name = "Felix"`. If you want to implement more compex predicates, you find more examples [here](https://github.com/apache/incubator-parquet-mr/blob/3df3372a1ee7b6ea74af89f53a614895b8078609/parquet-column/src/test/java/parquet/io/TestFiltered.java).
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 
 ~~~java
-import parquet.column.ColumnReader;
+import parquet.column.ColumnReader;ve
 import parquet.filter.ColumnPredicates;
 import parquet.filter.ColumnRecordFilter;
 import parquet.filter.RecordFilter;
@@ -382,9 +401,12 @@ class PersonFilter extends UnboundRecordFilter {
 </div>
 </div>
 
+
 ### Schema projection
 
-Something
+Schema projection is very important because it can reduce a large number of I/O disk accesses and therefore speeds up reading. Unfortunately Parquet implemented the schema projection for each data serialization framework differently.
+
+In the box below you can find an example how to apply schema projection and read all records without the attribute `phone.type`.
 
 <div class="codetabs" markdown="1">
 <div data-lang="protobuf" markdown="1">

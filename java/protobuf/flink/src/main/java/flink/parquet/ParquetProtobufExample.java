@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import flink.parquet.filter.PersonFilter;
-import flink.parquet.proto.AddressBookProtos;
+import flink.parquet.proto.PersonProto.Person;
 
 
 @SuppressWarnings("serial")
@@ -53,7 +53,7 @@ public class ParquetProtobufExample {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         //output
-        DataSet<Tuple2<Void,AddressBookProtos.Person>> data = generateDataSet(env);
+        DataSet<Tuple2<Void,Person>> data = generateDataSet(env);
 
         writeProtobuf(data, "newpath");
         
@@ -64,7 +64,7 @@ public class ParquetProtobufExample {
         //input
         final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();      
         
-        DataSet<Tuple2<Void,AddressBookProtos.Person.Builder>> input = readProtobuf(env2, "newpath");
+        DataSet<Tuple2<Void,Person.Builder>> input = readProtobuf(env2, "newpath");
         
         input.map(new TupleToProto()).print();       
 
@@ -72,36 +72,36 @@ public class ParquetProtobufExample {
     }
 
 
-    public static Tuple2<Void, AddressBookProtos.Person> generateSampleObject(int id, String name, String phone) {
-        AddressBookProtos.Person.Builder person = AddressBookProtos.Person.newBuilder();
+    public static Tuple2<Void, Person> generateSampleObject(int id, String name, String phone) {
+        Person.Builder person = Person.newBuilder();
         person.setId(id);
         person.setName(name);
         
-        AddressBookProtos.Person.PhoneNumber.Builder phoneNumber =  AddressBookProtos.Person.PhoneNumber.newBuilder().setNumber(phone);
-        phoneNumber.setType(AddressBookProtos.Person.PhoneType.WORK);
+        Person.PhoneNumber.Builder phoneNumber =  Person.PhoneNumber.newBuilder().setNumber(phone);
+        phoneNumber.setType(Person.PhoneType.WORK);
         person.addPhone(phoneNumber);
         
-        return new Tuple2<Void, AddressBookProtos.Person>(null, person.build());
+        return new Tuple2<Void, Person>(null, person.build());
     }
 
-    public static  List<Tuple2<Void, AddressBookProtos.Person>> generateSampleList() {
-        List samples = new ArrayList<Tuple2<Void, AddressBookProtos.Person>>();
+    public static  List<Tuple2<Void, Person>> generateSampleList() {
+        List samples = new ArrayList<Tuple2<Void, Person>>();
         samples.add(generateSampleObject(42,"Felix","0123"));
         samples.add(generateSampleObject(43,"Robert","4567"));
 
         return samples;
     }
         
-    public static DataSet<Tuple2<Void,AddressBookProtos.Person>> generateDataSet(ExecutionEnvironment env) {
+    public static DataSet<Tuple2<Void,Person>> generateDataSet(ExecutionEnvironment env) {
         List l = generateSampleList();
-        TypeInformation t = new TupleTypeInfo<Tuple2<Void,AddressBookProtos.Person>>(TypeExtractor.getForClass(Void.class), TypeExtractor.getForClass(AddressBookProtos.Person.class));
+        TypeInformation t = new TupleTypeInfo<Tuple2<Void,Person>>(TypeExtractor.getForClass(Void.class), TypeExtractor.getForClass(Person.class));
 
-        DataSet<Tuple2<Void,AddressBookProtos.Person>> data = env.fromCollection(l,t);
+        DataSet<Tuple2<Void,Person>> data = env.fromCollection(l,t);
         
         return data;
     }
 
-    public static void writeProtobuf(DataSet<Tuple2<Void,AddressBookProtos.Person>> data, String outputPath) throws IOException {
+    public static void writeProtobuf(DataSet<Tuple2<Void,Person>> data, String outputPath) throws IOException {
         Job job = Job.getInstance();
 
         // Set up Hadoop Output Format
@@ -109,7 +109,7 @@ public class ParquetProtobufExample {
 
         FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-        ProtoParquetOutputFormat.setProtobufClass(job, AddressBookProtos.Person.class);
+        ProtoParquetOutputFormat.setProtobufClass(job, Person.class);
         ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
         ParquetOutputFormat.setEnableDictionary(job, true);
 
@@ -117,10 +117,10 @@ public class ParquetProtobufExample {
         data.output(hadoopOutputFormat);
     }
 
-    public static DataSet<Tuple2<Void,AddressBookProtos.Person.Builder>> readProtobuf(ExecutionEnvironment env, String inputPath) throws IOException {
+    public static DataSet<Tuple2<Void,Person.Builder>> readProtobuf(ExecutionEnvironment env, String inputPath) throws IOException {
         Job job = Job.getInstance();
 
-        HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ProtoParquetInputFormat(), Void.class, AddressBookProtos.Person.Builder.class, job);
+        HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ProtoParquetInputFormat(), Void.class, Person.Builder.class, job);
 
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
@@ -138,15 +138,15 @@ public class ParquetProtobufExample {
                 "}";
         ProtoParquetInputFormat.setRequestedProjection(job, projection);
 
-        DataSet<Tuple2<Void, AddressBookProtos.Person.Builder>> data = env.createInput(hadoopInputFormat);
+        DataSet<Tuple2<Void, Person.Builder>> data = env.createInput(hadoopInputFormat);
 
         return data;
     }
 
-    public static final class TupleToProto implements MapFunction<Tuple2<Void, AddressBookProtos.Person.Builder>, AddressBookProtos.Person> {
+    public static final class TupleToProto implements MapFunction<Tuple2<Void, Person.Builder>, Person> {
 
         @Override
-        public AddressBookProtos.Person map(Tuple2<Void, AddressBookProtos.Person.Builder> value) {
+        public Person map(Tuple2<Void, Person.Builder> value) {
             return value.f1.build();
 
         }

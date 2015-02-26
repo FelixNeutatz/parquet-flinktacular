@@ -26,6 +26,113 @@ under the License.
 This document gives a deep-dive into the available transformations on DataSets. For a general introduction to the
 Flink Java API, please refer to the [Programming Guide](programming_guide.html)
 
+### Parquet
+
+"[Parquet](http://parquet.incubator.apache.org/) is a columnar storage format for Hadoop that supports complex nested data."
+
+Parquet is an open source project. Cloudera and Twitter are the major contributors. The idea for Parquet came from Google. They introduced their system called [Dremel](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36632.pdf)
+which brings the advantages of columnar storage and nested data together. Parquet is implementing this concept in Hadoop. Since Flink provides a seamless integration for Hadoop formats, we can leverage all the advantages of Parquet in Flink.
+
+### Getting started
+
+The idea of this tutorial is to get you started as quickly as possible. Therefore I setup a [Github repository](https://github.com/FelixNeutatz/parquet-flinktacular). There you can find sample [Maven](http://maven.apache.org/) projects which can serve you as templates for your own projects. 
+
+At the moment I provide templates for the following use cases:
+
+1. [Parquet at Flink - using Java and Protocol Buffers schema definition](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/protobuf)
+2. [Parquet at Flink - using Java and Thrift schema definition](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/thrift)
+3. [Parquet at Flink - using Java and Avro schema definition](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/avro)
+4. [Parquet at Flink - using Scala and Protocol Buffers schema definition](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/scala/protobuf) 
+
+Each project has two main folders: __commons__ and __flink__. 
+
+In the __commons__ folder you put your schema definition IDL file. The Maven `commons/pom.xml` is configured to build classes from the IDL file during compilation. This makes development more convenient, because you don't need to recompile the IDL file by hand whenever there is any minor change in your schema.
+
+In the __flink__ folder there are your Flink jobs which read and write Parquet.
+
+So choose your template project, download the corresponding folder and run: 
+
+~~~bash
+$ mvn clean compile package
+~~~
+
+
+### Define your schema
+
+There are several ways to define the schema of your data. This tutorial covers three data serialization frameworks:  [Avro](http://avro.apache.org/), [Protocol Buffers (protobuf)](https://github.com/google/protobuf/) and [Thrift](https://thrift.apache.org/).
+
+
+<div class="codetabs" markdown="1">
+<div data-lang="protobuf" markdown="1">
+
+~~~
+option java_package = "flink.parquet.proto";
+option java_outer_classname = "PersonProto";
+
+message Person {
+  required string name = 1;
+  required int32 id = 2;
+  optional string email = 3;
+
+  enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+  }
+
+  message PhoneNumber {
+    required string number = 1;
+    optional PhoneType type = 2 [default = HOME];
+  }
+
+  repeated PhoneNumber phone = 4;
+}
+~~~
+
+</div>
+<div data-lang="thrift" markdown="1">
+
+~~~
+namespace java flink.parquet.thrift
+
+enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+}
+
+struct PhoneNumber {
+    1: required string number,
+    2: optional PhoneType type = PhoneType.HOME;
+}
+
+struct Person {
+  1: required string name,
+  2: required i32 id,
+  3: optional string email,
+  4: list<PhoneNumber> phone
+}
+~~~
+
+</div>
+<div data-lang="avro" markdown="1">
+
+~~~
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-hadoop</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+<dependency>
+	<groupId>com.twitter</groupId>
+	<artifactId>parquet-avro</artifactId>
+	<version>1.6.0rc4</version>
+</dependency>
+~~~
+
+</div>
+</div>
+
 
 ### Flink dependencies
 
@@ -34,7 +141,7 @@ Some text
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 
-~~~java
+~~~
 <dependency>
 	<groupId>org.apache.flink</groupId>
 	<artifactId>flink-clients</artifactId>
@@ -50,7 +157,7 @@ Some text
 </div>
 <div data-lang="scala" markdown="1">
 
-~~~scala
+~~~
 <dependency>
 	<groupId>org.apache.flink</groupId>
 	<artifactId>flink-clients</artifactId>
@@ -74,7 +181,7 @@ Something
 <div class="codetabs" markdown="1">
 <div data-lang="protobuf" markdown="1">
 
-~~~java
+~~~
 <dependency>
 	<groupId>com.twitter</groupId>
 	<artifactId>parquet-hadoop</artifactId>
@@ -90,7 +197,7 @@ Something
 </div>
 <div data-lang="thrift" markdown="1">
 
-~~~java
+~~~
 <dependency>
 	<groupId>com.twitter</groupId>
 	<artifactId>parquet-hadoop</artifactId>
@@ -106,7 +213,7 @@ Something
 </div>
 <div data-lang="avro" markdown="1">
 
-~~~java
+~~~
 <dependency>
 	<groupId>com.twitter</groupId>
 	<artifactId>parquet-hadoop</artifactId>
@@ -141,7 +248,7 @@ FileOutputFormat.setOutputPath(job, new Path(outputPath));
 ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
 ParquetOutputFormat.setEnableDictionary(job, true);
 
-ProtoParquetOutputFormat.setProtobufClass(job, AddressBookProtos.Person.class);
+ProtoParquetOutputFormat.setProtobufClass(job, Person.class);
 
 // Output & Execute
 data.output(parquetFormat);
@@ -154,15 +261,14 @@ data.output(parquetFormat);
 val job = Job.getInstance
 
 // Set up Hadoop Output Format
-val parquetFormat = 
-        new HadoopOutputFormat[Void,AddressBookProtos.Person](new ProtoParquetOutputFormat, job)
+val parquetFormat = new HadoopOutputFormat[Void,Person](new ProtoParquetOutputFormat, job)
 
 FileOutputFormat.setOutputPath(job, new Path(outputPath))
 
 ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY)
 ParquetOutputFormat.setEnableDictionary(job, true)
 
-ProtoParquetOutputFormat.setProtobufClass(job, classOf[AddressBookProtos.Person])
+ProtoParquetOutputFormat.setProtobufClass(job, classOf[Person])
 
 // Output & Execute
 data.output(parquetFormat)
@@ -183,14 +289,14 @@ ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 Job job = Job.getInstance();
 
 HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(
-        new ProtoParquetInputFormat(), Void.class, AddressBookProtos.Person.Builder.class, job);
+        new ProtoParquetInputFormat(), Void.class, Person.Builder.class, job);
 
 FileInputFormat.addInputPath(job, new Path(inputPath));
 
 //native predicate push down: read only records which satisfy a given constraint
 ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
 
-DataSet<Tuple2<Void,AddressBookProtos.Person.Builder>> data = env.createInput(hadoopInputFormat);
+DataSet<Tuple2<Void,Person.Builder>> data = env.createInput(hadoopInputFormat);
 ~~~
 
 </div>
@@ -200,8 +306,8 @@ DataSet<Tuple2<Void,AddressBookProtos.Person.Builder>> data = env.createInput(ha
 val env = ExecutionEnvironment.getExecutionEnvironment
 val job = Job.getInstance
 
-val parquetFormat = new HadoopInputFormat[Void,AddressBookProtos.Person.Builder](
-    new ProtoParquetInputFormat, classOf[Void], classOf[AddressBookProtos.Person.Builder], job)
+val parquetFormat = new HadoopInputFormat[Void,Person.Builder](
+    new ProtoParquetInputFormat, classOf[Void], classOf[Person.Builder], job)
 
 FileInputFormat.addInputPath(job, new Path(inputPath))
 

@@ -29,11 +29,10 @@ import parquet.hadoop.metadata.CompressionCodecName
 import parquet.proto.ProtoParquetInputFormat
 import parquet.proto.ProtoParquetOutputFormat
 
-import org.apache.flink.api.common.io.OutputFormat
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.hadoop.mapreduce._
 
-import flink.parquet.proto.AddressBookProtos
+import flink.parquet.proto.PersonProto.Person
 import flink.parquet.filter.PersonFilter
 
 
@@ -57,25 +56,25 @@ object ParquetProtobufExample {
         
         val input = readProtobuf(env2, "newpath")
     
-        input.map { pair => pair._2.asInstanceOf[AddressBookProtos.Person.Builder].build }.print
+        input.map { pair => pair._2.asInstanceOf[Person.Builder].build }.print
 
         env2.execute("Parquet input")
     }
 
 
-    def generateSampleObject(id:Integer, name:String, phone:String): Tuple2[Void, AddressBookProtos.Person] = {
-        val person = AddressBookProtos.Person.newBuilder
+    def generateSampleObject(id:Integer, name:String, phone:String): Tuple2[Void, Person] = {
+        val person = Person.newBuilder
         person.setId(id)
         person.setName(name)
         
-        val phoneNumber =  AddressBookProtos.Person.PhoneNumber.newBuilder.setNumber(phone)
-        phoneNumber.setType(AddressBookProtos.Person.PhoneType.WORK)
+        val phoneNumber =  Person.PhoneNumber.newBuilder.setNumber(phone)
+        phoneNumber.setType(Person.PhoneType.WORK)
         person.addPhone(phoneNumber)
         
-        return new Tuple2[Void, AddressBookProtos.Person](null, person.build)
+        return new Tuple2[Void, Person](null, person.build)
     }
 
-    def generateDataSet(env:ExecutionEnvironment): DataSet[Tuple2[Void,AddressBookProtos.Person]] = {
+    def generateDataSet(env:ExecutionEnvironment): DataSet[Tuple2[Void,Person]] = {
         val samples = List(generateSampleObject(42,"Felix","0123"), generateSampleObject(43,"Robert","4567"))      
       
         val data = env.fromCollection(samples)
@@ -83,16 +82,16 @@ object ParquetProtobufExample {
         return data
     }
 
-    def writeProtobuf(data:DataSet[Tuple2[Void,AddressBookProtos.Person]], outputPath:String) {
+    def writeProtobuf(data:DataSet[Tuple2[Void,Person]], outputPath:String) {
         val job = Job.getInstance
 
         // Set up Hadoop Output Format
         val parquetFormat = 
-            new HadoopOutputFormat[Void,AddressBookProtos.Person](new ProtoParquetOutputFormat, job)
+            new HadoopOutputFormat[Void,Person](new ProtoParquetOutputFormat, job)
 
         FileOutputFormat.setOutputPath(job, new Path(outputPath))
 
-        ProtoParquetOutputFormat.setProtobufClass(job, classOf[AddressBookProtos.Person])
+        ProtoParquetOutputFormat.setProtobufClass(job, classOf[Person])
         ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY)
         ParquetOutputFormat.setEnableDictionary(job, true)
 
@@ -100,10 +99,10 @@ object ParquetProtobufExample {
         data.output(parquetFormat)
     }
 
-    def readProtobuf(env:ExecutionEnvironment, inputPath:String): DataSet[Tuple2[Void,AddressBookProtos.Person]] = {
+    def readProtobuf(env:ExecutionEnvironment, inputPath:String): DataSet[Tuple2[Void,Person]] = {
         val job = Job.getInstance
 
-        val parquetFormat = new HadoopInputFormat[Void,AddressBookProtos.Person.Builder](new ProtoParquetInputFormat, classOf[Void], classOf[AddressBookProtos.Person.Builder], job)
+        val parquetFormat = new HadoopInputFormat[Void,Person.Builder](new ProtoParquetInputFormat, classOf[Void], classOf[Person.Builder], job)
 
         FileInputFormat.addInputPath(job, new Path(inputPath))
 
@@ -123,7 +122,7 @@ object ParquetProtobufExample {
 
         val data = env.createInput(parquetFormat)
 
-        return data.asInstanceOf[DataSet[Tuple2[Void,AddressBookProtos.Person]]]
+        return data.asInstanceOf[DataSet[Tuple2[Void,Person]]]
     }
 
 

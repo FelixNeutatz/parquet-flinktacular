@@ -1,0 +1,21 @@
+@namespace("flink.parquet.avro")
+protocol FlinkParquetAvro {
+
+  enum PhoneType {
+    MOBILE,
+    HOME, 
+    WORK
+  }
+  
+  record PhoneNumber {
+    string number;
+    union { null, PhoneType } type = "HOME";
+  }
+
+  record Person {
+    string name;
+    int id;
+    union { null, string } email;
+    array<PhoneNumber> phone;
+  }
+}

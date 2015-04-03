@@ -356,46 +356,26 @@ val data = env.createInput(parquetFormat)
 
 ### Native predicate pushdown
 
-The easiest type of predicate is an equality predicate. In the example below we accept only those records which have the `name = "Felix"`. If you want to implement more compex predicates, you find more examples [here](https://github.com/apache/incubator-parquet-mr/blob/3df3372a1ee7b6ea74af89f53a614895b8078609/parquet-column/src/test/java/parquet/io/TestFiltered.java).
+The easiest type of predicate is an equality predicate. In the example below we accept only those records which have the `name = "Felix"`. You can even specify more complex constraints with and, or, not ... 
+
+If you want to implement more compex predicates, you find more examples [here](https://github.com/apache/incubator-parquet-mr/blob/807915b4cacede6a8de49630469b673b7c248a6f/parquet-column/src/test/java/parquet/filter2/predicate/TestFilterApiMethods.java).
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
 
 ~~~java
-import parquet.column.ColumnReader;ve
-import parquet.filter.ColumnPredicates;
-import parquet.filter.ColumnRecordFilter;
-import parquet.filter.RecordFilter;
-import parquet.filter.UnboundRecordFilter;
-
-public class PersonFilter implements UnboundRecordFilter {
-    public RecordFilter bind(Iterable<ColumnReader> readers){
-        return ColumnRecordFilter.column(
-                "name",
-                ColumnPredicates.equalTo("Felix")
-        ).bind(readers);
-    }
-}
+BinaryColumn name = binaryColumn("name");
+FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 ~~~
 
 </div>
 <div data-lang="scala" markdown="1">
 
 ~~~scala
-import parquet.column.ColumnReader
-import parquet.filter.ColumnPredicates
-import parquet.filter.ColumnRecordFilter
-import parquet.filter.RecordFilter
-import parquet.filter.UnboundRecordFilter
-
-class PersonFilter extends UnboundRecordFilter {
-    def bind(readers: java.lang.Iterable[ColumnReader]): RecordFilter = {
-        return ColumnRecordFilter.column(
-		"name", 
-		ColumnPredicates.equalTo("Felix")
-	).bind(readers)
-    }
-}
+val name = binaryColumn("name")
+val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
+ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
 ~~~
 
 </div>
@@ -458,6 +438,50 @@ projection.setFields(
        
 AvroParquetInputFormat.setRequestedProjection(job, projection);
 ~~~
+
+</div>
+</div>
+
+
+### Experiment
+
+When it comes to file formats, two metrics are especially interesting:
+
+1. Is the data representation space efficient?
+2. Does the format has a good read performance?
+
+In order to get an idea to answer these two questions, I implemented query 55 of the [TPC-DS Benchmark](http://www.tpc.org/tpcds/). 
+
+In SQL query 55 looks like this:
+
+<div class="codetabs" markdown="1">
+<div data-lang="SQL" markdown="1">
+
+~~~sql
+select  i_brand_id brand_id, i_brand brand,
+        sum(ss_ext_sales_price) ext_price
+from date_dim, store_sales, item
+where date_dim.d_date_sk = store_sales.ss_sold_date_sk
+        and store_sales.ss_item_sk = item.i_item_sk
+        and i_manager_id = 28
+        and d_moy = 11
+        and d_year = 1999
+group by i_brand, i_brand_id
+order by ext_price desc, i_brand_id
+limit 100
+~~~
+
+This query joins three tables and selects only very few of the corresponding columns. This emphasizes the strength of Parquet: [schema projection](#Schema-projection).
+
+For the experiments I used scaling factor 20 (which generates 20GB of csv data). The three tables Date_Dim, Store_Sales and Item are only a part of this data (8GB).
+
+Using Snappy compression and dictionary encoding the three tables are compressed to half their original size. This shows that Parquet is highly space efficient.
+
+To compare the reading performance, I implemented a csv reader variant for the same query. The result: We gain a speed up of 2 using Parquet. This speed up will even increase when it comes to greater scaling factors.
+
+This is the perfect use case for Parquet. We are only interested in 10 columns out of a total of 73 columns. Because of the column store architecture the Parquet reader only needs to read the 10 columns whereas the csv reader has to read all 73 columns. If this ratio is not this drastic, the csv reader is faster than the Parquet reader.
+
+You can find my implementation of [TPC-DS](http://www.tpc.org/tpcds/) query 55 on [Github](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/experiments/TPCDS).
 
 </div>
 </div>

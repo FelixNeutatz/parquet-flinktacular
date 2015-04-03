@@ -121,9 +121,9 @@ object ParquetProtobufExample {
         ProtoParquetInputFormat.setRequestedProjection(job, projection)
 
         //native predicate push down: read only records which have name = "Felix"
-				val name = binaryColumn("name")
-			  val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
-			  ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
+	val name = binaryColumn("name")
+	val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
+	ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
 
         val data = env.createInput(parquetFormat)
 

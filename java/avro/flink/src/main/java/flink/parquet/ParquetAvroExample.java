@@ -141,9 +141,8 @@ public class ParquetAvroExample {
 
         // push down predicates: get all persons with name = "Felix"
         BinaryColumn name = binaryColumn("name");
-		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
-		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
-
+	FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+	ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 

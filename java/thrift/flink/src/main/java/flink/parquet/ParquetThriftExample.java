@@ -124,9 +124,9 @@ public class ParquetThriftExample {
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
         // push down predicates: get all persons with name = "Felix"
-		BinaryColumn name = binaryColumn("name");
-		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
-		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
+	BinaryColumn name = binaryColumn("name");
+	FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+	ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 

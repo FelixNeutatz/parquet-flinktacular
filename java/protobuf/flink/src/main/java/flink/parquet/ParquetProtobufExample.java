@@ -123,9 +123,9 @@ public class ParquetProtobufExample {
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
         //native predicate push down: read only records which satisfy a given constraint
-		BinaryColumn name = binaryColumn("name");
-		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
-		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
+	BinaryColumn name = binaryColumn("name");
+	FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+	ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
         //schema projection: don't read type of phone type attribute
         String projection = "message Person {\n" +

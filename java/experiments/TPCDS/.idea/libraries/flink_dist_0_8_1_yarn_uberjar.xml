@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="flink-dist-0.8.1-yarn-uberjar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/Desktop/idb/flink81/flink/flink-dist/target/flink-dist-0.8.1-yarn-uberjar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/Desktop/idb/flink81/flink/flink-dist/target/flink-dist-0.8.1-yarn-uberjar.jar!/" />
+    </SOURCES>
+  </library>
+</component>

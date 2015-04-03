@@ -1,3 +1,7 @@
+java/experiments/TPCDS/.idea/
+java/experiments/TPCDS/commons/target/
+java/experiments/TPCDS/flink/target/
+java/experiments/TPCDS/target/
 java/avro/.idea/
 java/avro/commons/target/
 java/avro/flink/target/

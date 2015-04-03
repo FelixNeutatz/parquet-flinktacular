@@ -27,8 +27,7 @@
 
 
   <dependencies>
-
-      <!-- Compiled custom Thrift classes-->  
+    <!-- Compiled custom Thrift classes-->  
     <dependency>
           <groupId>flink.parquet.thrift</groupId>
           <artifactId>commons</artifactId>
@@ -57,13 +56,16 @@
       <groupId>com.twitter</groupId>
       <artifactId>parquet-thrift</artifactId>
       <version>1.6.0rc4</version>
-    </dependency>
-
-
-   
+        <exclusions>
+            <exclusion> 
+                <groupId>org.apache.thrift</groupId>
+                <artifactId>libthrift</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>  
   </dependencies>
 
-    <build>
+  <build>
    <plugins>
      <plugin>
        <groupId>org.apache.maven.plugins</groupId>

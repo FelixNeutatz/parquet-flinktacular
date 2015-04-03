@@ -24,8 +24,6 @@
     </repository>
   </repositories>
 
-
-
   <dependencies>
     <!-- Compiled custom Thrift classes-->  
     <dependency>
@@ -96,5 +94,4 @@
      </plugin> 
    </plugins>
  </build>
-
 </project>

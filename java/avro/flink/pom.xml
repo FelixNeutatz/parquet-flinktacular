@@ -24,10 +24,7 @@
     </repository>
   </repositories>
 
-
-
   <dependencies>
-
     <!-- Compiled custom Avro classes-->  
     <dependency>
           <groupId>flink.parquet.avro</groupId>
@@ -57,13 +54,10 @@
       <groupId>com.twitter</groupId>
       <artifactId>parquet-avro</artifactId>
       <version>1.6.0rc4</version> 
-    </dependency>
-
-
-   
+    </dependency>   
   </dependencies>
-
-   <build>
+    
+  <build>
    <plugins>
      <plugin>
        <groupId>org.apache.maven.plugins</groupId>
@@ -94,5 +88,4 @@
      </plugin> 
    </plugins>
  </build>
-
 </project>

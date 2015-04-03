@@ -32,6 +32,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import parquet.filter2.predicate.FilterPredicate;
 import parquet.hadoop.ParquetInputFormat;
 import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
@@ -46,7 +47,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import flink.parquet.avro.*;
-import flink.parquet.filter.PersonFilter;
+import parquet.io.api.Binary;
+
+import static parquet.filter2.predicate.FilterApi.binaryColumn;
+import static parquet.filter2.predicate.FilterApi.eq;
+import static parquet.filter2.predicate.Operators.BinaryColumn;
 
 
 public class ParquetAvroExample {
@@ -54,38 +59,28 @@ public class ParquetAvroExample {
     public static void main(String[] args) throws Exception {
 
         //output
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        
-        Person person = generateSampleObject();
-        
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();        
+        Person person = generateSampleObject();        
         DataSet<Tuple2<Void,Person>> output = putObjectIntoDataSet(env, person);
-
-        writeAvro(output, "newpath");    
-        
+        writeAvro(output, "newpath");            
         output.print();
-
         env.execute("Output");
 
         //input
-        final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-        
-        DataSet<Tuple2<Void,Person>> input = readAvro(env2, "newpath");
-        
-        input.print();        
-
+        final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();        
+        DataSet<Tuple2<Void,Person>> input = readAvro(env2, "newpath");        
+        input.print();   
         env2.execute("Input"); 
     }
 
     
     public static Person generateSampleObject() {
-        Person person = new Person();
-        
+        Person person = new Person();        
         person.id = 42;
         person.name = "Felix";
         
         List<PhoneNumber> pList = new ArrayList<PhoneNumber>();
-        pList.add(new PhoneNumber("123456", PhoneType.WORK));
-        
+        pList.add(new PhoneNumber("123456", PhoneType.WORK));        
         person.setPhone(pList);
         return person;
     }
@@ -145,7 +140,9 @@ public class ParquetAvroExample {
         AvroParquetInputFormat.setRequestedProjection(job, projection);
 
         // push down predicates: get all persons with name = "Felix"
-        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
+        BinaryColumn name = binaryColumn("name");
+		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);

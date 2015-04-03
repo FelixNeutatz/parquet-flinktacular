@@ -31,12 +31,13 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import parquet.filter2.predicate.FilterPredicate;
 import parquet.hadoop.ParquetInputFormat;
 import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.hadoop.thrift.ParquetThriftOutputFormat;
 import parquet.hadoop.thrift.ParquetThriftInputFormat;
-import parquet.hadoop.thrift.ThriftReadSupport;
+import parquet.io.api.Binary;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +45,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import flink.parquet.thrift.*;
-import flink.parquet.filter.PersonFilter;
+
+import static parquet.filter2.predicate.FilterApi.eq;
+import static parquet.filter2.predicate.FilterApi.binaryColumn;
+import static parquet.filter2.predicate.Operators.BinaryColumn;
 
 
 public class ParquetThriftExample {
@@ -54,27 +58,21 @@ public class ParquetThriftExample {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         
         //output
-        Person person = generateSampleObject();
-        
+        Person person = generateSampleObject();        
         DataSet<Tuple2<Void,Person>> output = putObjectIntoDataSet(env, person);
-
-        writeThrift(output, "newpath");    
-        
+        writeThrift(output, "newpath");            
         output.print();
         
         //input
-        
-        DataSet<Tuple2<Void,Person>> input = readThrift(env, "newpath");
-        
+        DataSet<Tuple2<Void,Person>> input = readThrift(env, "newpath");        
         input.print();        
 
-        env.execute("Word Count"); 
+        env.execute("Parquet Thrift Example"); 
     }
 
     
     public static Person generateSampleObject() {
-        Person person = new Person();
-        
+        Person person = new Person();        
         person.id = 42;
         person.name = "Felix";
         
@@ -82,8 +80,7 @@ public class ParquetThriftExample {
         PhoneNumber phoneNumber = new PhoneNumber();
         phoneNumber.setType(PhoneType.WORK);
         phoneNumber.setNumber("0123456");
-        phoneNumberList.add(phoneNumber);
-        
+        phoneNumberList.add(phoneNumber);        
         person.setPhone(phoneNumberList);
 
         return person;
@@ -127,13 +124,12 @@ public class ParquetThriftExample {
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
         // push down predicates: get all persons with name = "Felix"
-        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
+		BinaryColumn name = binaryColumn("name");
+		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
         DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 
         return data;
     }
-    
-
-
 }

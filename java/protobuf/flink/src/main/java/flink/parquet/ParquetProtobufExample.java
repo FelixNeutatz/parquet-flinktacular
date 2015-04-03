@@ -31,9 +31,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import parquet.filter2.predicate.FilterPredicate;
 import parquet.hadoop.ParquetInputFormat;
 import parquet.hadoop.ParquetOutputFormat;
 import parquet.hadoop.metadata.CompressionCodecName;
+import parquet.io.api.Binary;
 import parquet.proto.ProtoParquetInputFormat;
 import parquet.proto.ProtoParquetOutputFormat;
 
@@ -41,8 +43,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import flink.parquet.filter.PersonFilter;
 import flink.parquet.proto.PersonProto.Person;
+
+import static parquet.filter2.predicate.FilterApi.eq;
+import static parquet.filter2.predicate.FilterApi.binaryColumn;
+import static parquet.filter2.predicate.Operators.BinaryColumn;
 
 
 @SuppressWarnings("serial")
@@ -50,24 +55,17 @@ public class ParquetProtobufExample {
 
     public static void main(String[] args) throws Exception {
 
+		//output
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-
-        //output
-        DataSet<Tuple2<Void,Person>> data = generateDataSet(env);
-
-        writeProtobuf(data, "newpath");
-        
-        data.print();
-        
-        env.execute("Parquet Output");
+		DataSet<Tuple2<Void,Person>> data = generateDataSet(env);
+        writeProtobuf(data, "newpath");        
+        data.print();        
+        env.execute("Parquet output");
 
         //input
-        final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();      
-        
-        DataSet<Tuple2<Void,Person.Builder>> input = readProtobuf(env2, "newpath");
-        
-        input.map(new TupleToProto()).print();       
-
+        final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();          
+        DataSet<Tuple2<Void,Person.Builder>> input = readProtobuf(env2, "newpath");        
+        input.map(new TupleToProto()).print();  
         env2.execute("Parquet input");
     }
 
@@ -125,7 +123,9 @@ public class ParquetProtobufExample {
         FileInputFormat.addInputPath(job, new Path(inputPath));
 
         //native predicate push down: read only records which satisfy a given constraint
-        ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
+		BinaryColumn name = binaryColumn("name");
+		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
         //schema projection: don't read type of phone type attribute
         String projection = "message Person {\n" +
@@ -144,13 +144,10 @@ public class ParquetProtobufExample {
     }
 
     public static final class TupleToProto implements MapFunction<Tuple2<Void, Person.Builder>, Person> {
-
         @Override
         public Person map(Tuple2<Void, Person.Builder> value) {
             return value.f1.build();
 
         }
     }
-
-
 }

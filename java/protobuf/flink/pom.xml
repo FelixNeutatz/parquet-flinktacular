@@ -24,11 +24,8 @@
     </repository>
   </repositories>
 
-
-
   <dependencies>
-
-      <!-- Compiled custom Protobuf classes-->  
+    <!-- Compiled custom Protobuf classes-->  
     <dependency>
           <groupId>flink.parquet.proto</groupId>
           <artifactId>commons</artifactId>
@@ -63,13 +60,10 @@
                 <artifactId>protobuf-java</artifactId>
             </exclusion>
         </exclusions>  
-    </dependency>
-
-
-   
+    </dependency>   
   </dependencies>
 
-    <build>
+  <build>
    <plugins>
      <plugin>
        <groupId>org.apache.maven.plugins</groupId>
@@ -100,5 +94,4 @@
      </plugin> 
    </plugins>
  </build>
-
 </project>

@@ -22,10 +22,12 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import parquet.filter2.predicate.{FilterApi, FilterPredicate}
 
 import parquet.hadoop.ParquetOutputFormat
 import parquet.hadoop.ParquetInputFormat
 import parquet.hadoop.metadata.CompressionCodecName
+import parquet.io.api.Binary
 import parquet.proto.ProtoParquetInputFormat
 import parquet.proto.ProtoParquetOutputFormat
 
@@ -33,7 +35,8 @@ import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.hadoop.mapreduce._
 
 import flink.parquet.proto.PersonProto.Person
-import flink.parquet.filter.PersonFilter
+import parquet.filter2.predicate.FilterApi.binaryColumn
+import parquet.filter2.predicate.Operators.BinaryColumn
 
 
 object ParquetProtobufExample {
@@ -118,7 +121,9 @@ object ParquetProtobufExample {
         ProtoParquetInputFormat.setRequestedProjection(job, projection)
 
         //native predicate push down: read only records which have name = "Felix"
-        ParquetInputFormat.setUnboundRecordFilter(job, classOf[PersonFilter])
+				val name = binaryColumn("name")
+			  val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
+			  ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
 
         val data = env.createInput(parquetFormat)
 

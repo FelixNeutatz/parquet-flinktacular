@@ -477,7 +477,7 @@ For the experiments I used scaling factor 20 (which generates 20GB of csv data).
 
 Using Snappy compression and dictionary encoding the three tables are compressed to half their original size. This shows that Parquet is highly space efficient.
 
-To compare the reading performance, I implemented a csv reader variant for the same query. The result: We gain a speed up of 2 using Parquet. This speed up will even increase when it comes to greater scaling factors.
+To compare the reading performance, I implemented a csv reader variant for the same query. The result: We gain a speed up of up to 2 using Parquet. This speed up will even increase when it comes to greater scaling factors.
 
 This is the perfect use case for Parquet. We are only interested in 10 columns out of a total of 73 columns. Because of the column store architecture the Parquet reader only needs to read the 10 columns whereas the csv reader has to read all 73 columns. If this ratio is not this drastic, the csv reader is faster than the Parquet reader.
 

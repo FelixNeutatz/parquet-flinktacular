@@ -56,101 +56,101 @@ import static parquet.filter2.predicate.Operators.BinaryColumn;
 
 public class ParquetAvroExample {
 
-		public static void main(String[] args) throws Exception {
+				public static void main(String[] args) throws Exception {
 
-				//output
-				final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-				Person person = generateSampleObject();
-				DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
-				writeAvro(output, "newpath");
-				output.print();
-				env.execute("Output");
+								//output
+								final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+								Person person = generateSampleObject();
+								DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
+								writeAvro(output, "newpath");
+								output.print();
+								env.execute("Output");
 
-				//input
-				final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-				DataSet<Tuple2<Void, Person>> input = readAvro(env2, "newpath");
-				input.print();
-				env2.execute("Input");
-		}
-
-
-		public static Person generateSampleObject() {
-				Person person = new Person();
-				person.id = 42;
-				person.name = "Felix";
-
-				List<PhoneNumber> pList = new ArrayList<PhoneNumber>();
-				pList.add(new PhoneNumber("123456", PhoneType.WORK));
-				person.setPhone(pList);
-				return person;
-		}
-
-		public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
-				List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
-				TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class),
-						TypeExtractor.getForClass(Person.class));
-
-				DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
-
-				return data;
-		}
-
-		public static void writeAvro(DataSet<Tuple2<Void, Person>> data, String outputPath) throws IOException {
-				// Set up the Hadoop Input Format
-				Job job = Job.getInstance();
-
-				// Set up Hadoop Output Format
-				HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new AvroParquetOutputFormat(), job);
-
-				FileOutputFormat.setOutputPath(job, new Path(outputPath));
-
-				AvroParquetOutputFormat.setSchema(job, Person.getClassSchema());
-				ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-				ParquetOutputFormat.setEnableDictionary(job, true);
-
-				// Output & Execute
-				data.output(hadoopOutputFormat);
-		}
-
-		public static DataSet<Tuple2<Void, Person>> readAvro(ExecutionEnvironment env, String inputPath) throws
-				IOException {
-				Job job = Job.getInstance();
-
-				HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new AvroParquetInputFormat(), Void.class, Person
-						.class, job);
-
-				FileInputFormat.addInputPath(job, new Path(inputPath));
-
-				// schema projection: don't read type of phonenumber     
-				Schema phone = Schema.createRecord("PhoneNumber", null, null, false);
-				phone.setFields(Arrays.asList(
-						new Schema.Field("number", Schema.create(Schema.Type.BYTES), null, null)));
-
-				Schema array = Schema.createArray(phone);
-				Schema union = Schema.createUnion(Lists.newArrayList(Schema.create(Schema.Type.BYTES), Schema.create(Schema
-						.Type
-						.NULL)));
+								//input
+								final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
+								DataSet<Tuple2<Void, Person>> input = readAvro(env2, "newpath");
+								input.print();
+								env2.execute("Input");
+				}
 
 
-				Schema projection = Schema.createRecord("Person", null, null, false);
-				projection.setFields(
-						Arrays.asList(
-								new Schema.Field("name", Schema.create(Schema.Type.BYTES), null, null),
-								new Schema.Field("id", Schema.create(Schema.Type.INT), null, null),
-								new Schema.Field("email", union, null, null),
-								new Schema.Field("phone", array, null, null)
-						)
-				);
+				public static Person generateSampleObject() {
+								Person person = new Person();
+								person.id = 42;
+								person.name = "Felix";
 
-				AvroParquetInputFormat.setRequestedProjection(job, projection);
+								List<PhoneNumber> pList = new ArrayList<PhoneNumber>();
+								pList.add(new PhoneNumber("123456", PhoneType.WORK));
+								person.setPhone(pList);
+								return person;
+				}
 
-				// push down predicates: get all persons with name = "Felix"
-				BinaryColumn name = binaryColumn("name");
-				FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
-				ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
+				public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
+								List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
+								TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class),
+												TypeExtractor.getForClass(Person.class));
 
-				DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
+								DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
 
-				return data;
-		}
+								return data;
+				}
+
+				public static void writeAvro(DataSet<Tuple2<Void, Person>> data, String outputPath) throws IOException {
+								// Set up the Hadoop Input Format
+								Job job = Job.getInstance();
+
+								// Set up Hadoop Output Format
+								HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new AvroParquetOutputFormat(), job);
+
+								FileOutputFormat.setOutputPath(job, new Path(outputPath));
+
+								AvroParquetOutputFormat.setSchema(job, Person.getClassSchema());
+								ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+								ParquetOutputFormat.setEnableDictionary(job, true);
+
+								// Output & Execute
+								data.output(hadoopOutputFormat);
+				}
+
+				public static DataSet<Tuple2<Void, Person>> readAvro(ExecutionEnvironment env, String inputPath) throws
+								IOException {
+								Job job = Job.getInstance();
+
+								HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new AvroParquetInputFormat(), Void.class, Person
+												.class, job);
+
+								FileInputFormat.addInputPath(job, new Path(inputPath));
+
+								// schema projection: don't read type of phonenumber     
+								Schema phone = Schema.createRecord("PhoneNumber", null, null, false);
+								phone.setFields(Arrays.asList(
+												new Schema.Field("number", Schema.create(Schema.Type.BYTES), null, null)));
+
+								Schema array = Schema.createArray(phone);
+								Schema union = Schema.createUnion(Lists.newArrayList(Schema.create(Schema.Type.BYTES), Schema.create(Schema
+												.Type
+												.NULL)));
+
+
+								Schema projection = Schema.createRecord("Person", null, null, false);
+								projection.setFields(
+												Arrays.asList(
+																new Schema.Field("name", Schema.create(Schema.Type.BYTES), null, null),
+																new Schema.Field("id", Schema.create(Schema.Type.INT), null, null),
+																new Schema.Field("email", union, null, null),
+																new Schema.Field("phone", array, null, null)
+												)
+								);
+
+								AvroParquetInputFormat.setRequestedProjection(job, projection);
+
+								// push down predicates: get all persons with name = "Felix"
+								BinaryColumn name = binaryColumn("name");
+								FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+								ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
+
+								DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
+
+								return data;
+				}
 }

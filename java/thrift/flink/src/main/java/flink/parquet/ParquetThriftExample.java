@@ -53,83 +53,86 @@ import static parquet.filter2.predicate.Operators.BinaryColumn;
 
 public class ParquetThriftExample {
 
-		public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 
-				final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-				//output
-				Person person = generateSampleObject();
-				DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
-				writeThrift(output, "newpath");
-				output.print();
+		//output
+		Person person = generateSampleObject();
+		DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
+		writeThrift(output, "newpath");
+		output.print();
 
-				//input
-				DataSet<Tuple2<Void, Person>> input = readThrift(env, "newpath");
-				input.print();
+		//input
+		DataSet<Tuple2<Void, Person>> input = readThrift(env, "newpath");
+		input.print();
 
-				env.execute("Parquet Thrift Example");
-		}
+		env.execute("Parquet Thrift Example");
+	}
 
 
-		public static Person generateSampleObject() {
-				Person person = new Person();
-				person.id = 42;
-				person.name = "Felix";
+	public static Person generateSampleObject() {
+		Person person = new Person();
+		person.id = 42;
+		person.name = "Felix";
 
-				List<PhoneNumber> phoneNumberList = new ArrayList<PhoneNumber>();
-				PhoneNumber phoneNumber = new PhoneNumber();
-				phoneNumber.setType(PhoneType.WORK);
-				phoneNumber.setNumber("0123456");
-				phoneNumberList.add(phoneNumber);
-				person.setPhone(phoneNumberList);
+		List<PhoneNumber> phoneNumberList = new ArrayList<PhoneNumber>();
+		PhoneNumber phoneNumber = new PhoneNumber();
+		phoneNumber.setType(PhoneType.WORK);
+		phoneNumber.setNumber("0123456");
+		phoneNumberList.add(phoneNumber);
+		person.setPhone(phoneNumberList);
 
-				return person;
-		}
+		return person;
+	}
 
-		public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
-				List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
-				TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class), TypeExtractor.getForClass(Person.class));
+	public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
+		List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
+		TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class), 
+			TypeExtractor.getForClass(Person.class));
 
-				DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
+		DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
 
-				return data;
-		}
+		return data;
+	}
 
-		public static void writeThrift(DataSet<Tuple2<Void, Person>> data, String outputPath) throws IOException {
-				// Set up the Hadoop Input Format
-				Job job = Job.getInstance();
+	public static void writeThrift(DataSet<Tuple2<Void, Person>> data, String outputPath) throws IOException {
+		// Set up the Hadoop Input Format
+		Job job = Job.getInstance();
 
-				// Set up Hadoop Output Format
-				HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new ParquetThriftOutputFormat(), job);
+		// Set up Hadoop Output Format
+		HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new ParquetThriftOutputFormat(), job);
 
-				FileOutputFormat.setOutputPath(job, new Path(outputPath));
+		FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
-				ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-				ParquetOutputFormat.setEnableDictionary(job, true);
+		ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+		ParquetOutputFormat.setEnableDictionary(job, true);
 
-				ParquetThriftOutputFormat.setThriftClass(job, Person.class);
+		ParquetThriftOutputFormat.setThriftClass(job, Person.class);
 
-				// Output & Execute
-				data.output(hadoopOutputFormat);
-		}
+		// Output & Execute
+		data.output(hadoopOutputFormat);
+	}
 
-		public static DataSet<Tuple2<Void, Person>> readThrift(ExecutionEnvironment env, String inputPath) throws IOException {
-				Job job = Job.getInstance();
+	public static DataSet<Tuple2<Void, Person>> readThrift(ExecutionEnvironment env, String inputPath) throws 
+		IOException {
+		Job job = Job.getInstance();
 
-				HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ParquetThriftInputFormat(), Void.class, Person.class, job);
+		HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ParquetThriftInputFormat(), Void.class, Person
+			.class, job);
 
-				// schema projection: don't read attributes id and email
-				job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/number");
+		// schema projection: don't read attributes id and email
+		job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/number");
 
-				FileInputFormat.addInputPath(job, new Path(inputPath));
+		FileInputFormat.addInputPath(job, new Path(inputPath));
 
-				// push down predicates: get all persons with name = "Felix"
-				BinaryColumn name = binaryColumn("name");
-				FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
-				ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
+		// push down predicates: get all persons with name = "Felix"
+		BinaryColumn name = binaryColumn("name");
+		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
-				DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
+		DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 
-				return data;
-		}
+		return data;
+	}
 }

@@ -7,15 +7,15 @@ enum PhoneType {
 }
 
 struct PhoneNumber {
-    1: required string number,
-    2: optional PhoneType type = PhoneType.HOME;
+	1: required string number,
+	2: optional PhoneType type = PhoneType.HOME;
 }
 
 struct Person {
-  1: required string name,
-  2: required i32 id,
-  3: optional string email,
-  4: list<PhoneNumber> phone
+	1: required string name,
+	2: required i32 id,
+	3: optional string email,
+	4: list<PhoneNumber> phone
 }
 
 

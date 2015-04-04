@@ -36,99 +36,99 @@ import org.apache.flink.api.scala.hadoop.mapreduce._
 
 import flink.parquet.proto.PersonProto.Person
 import parquet.filter2.predicate.FilterApi.binaryColumn
-import parquet.filter2.predicate.Operators.BinaryColumn
 
 
 object ParquetProtobufExample {
 
-  def main(args: Array[String]) {
+	def main(args: Array[String]) {
 
-        val env = ExecutionEnvironment.getExecutionEnvironment
+		val env = ExecutionEnvironment.getExecutionEnvironment
 
-        //output
-        val data = generateDataSet(env)
+		//output
+		val data = generateDataSet(env)
 
-        writeProtobuf(data, "newpath")
-        
-        data.print()
-        
-        env.execute("Parquet Output")
+		writeProtobuf(data, "newpath")
 
-        //input
-        val env2 = ExecutionEnvironment.getExecutionEnvironment
-        
-        val input = readProtobuf(env2, "newpath")
-    
-        input.map { pair => pair._2.asInstanceOf[Person.Builder].build }.print
+		data.print()
 
-        env2.execute("Parquet input")
-    }
+		env.execute("Parquet Output")
+
+		//input
+		val env2 = ExecutionEnvironment.getExecutionEnvironment
+
+		val input = readProtobuf(env2, "newpath")
+
+		input.map { pair => pair._2.asInstanceOf[Person.Builder].build}.print
+
+		env2.execute("Parquet input")
+	}
 
 
-    def generateSampleObject(id:Integer, name:String, phone:String): Tuple2[Void, Person] = {
-        val person = Person.newBuilder
-        person.setId(id)
-        person.setName(name)
-        
-        val phoneNumber =  Person.PhoneNumber.newBuilder.setNumber(phone)
-        phoneNumber.setType(Person.PhoneType.WORK)
-        person.addPhone(phoneNumber)
-        
-        return new Tuple2[Void, Person](null, person.build)
-    }
+	def generateSampleObject(id: Integer, name: String, phone: String): Tuple2[Void, Person] = {
+		val person = Person.newBuilder
+		person.setId(id)
+		person.setName(name)
 
-    def generateDataSet(env:ExecutionEnvironment): DataSet[Tuple2[Void,Person]] = {
-        val samples = List(generateSampleObject(42,"Felix","0123"), generateSampleObject(43,"Robert","4567"))      
-      
-        val data = env.fromCollection(samples)
-        
-        return data
-    }
+		val phoneNumber = Person.PhoneNumber.newBuilder.setNumber(phone)
+		phoneNumber.setType(Person.PhoneType.WORK)
+		person.addPhone(phoneNumber)
 
-    def writeProtobuf(data:DataSet[Tuple2[Void,Person]], outputPath:String) {
-        val job = Job.getInstance
+		return new Tuple2[Void, Person](null, person.build)
+	}
 
-        // Set up Hadoop Output Format
-        val parquetFormat = 
-            new HadoopOutputFormat[Void,Person](new ProtoParquetOutputFormat, job)
+	def generateDataSet(env: ExecutionEnvironment): DataSet[Tuple2[Void, Person]] = {
+		val samples = List(generateSampleObject(42, "Felix", "0123"), generateSampleObject(43, "Robert", "4567"))
 
-        FileOutputFormat.setOutputPath(job, new Path(outputPath))
+		val data = env.fromCollection(samples)
 
-        ProtoParquetOutputFormat.setProtobufClass(job, classOf[Person])
-        ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY)
-        ParquetOutputFormat.setEnableDictionary(job, true)
+		return data
+	}
 
-        // Output & Execute
-        data.output(parquetFormat)
-    }
+	def writeProtobuf(data: DataSet[Tuple2[Void, Person]], outputPath: String) {
+		val job = Job.getInstance
 
-    def readProtobuf(env:ExecutionEnvironment, inputPath:String): DataSet[Tuple2[Void,Person]] = {
-        val job = Job.getInstance
+		// Set up Hadoop Output Format
+		val parquetFormat =
+			new HadoopOutputFormat[Void, Person](new ProtoParquetOutputFormat, job)
 
-        val parquetFormat = new HadoopInputFormat[Void,Person.Builder](new ProtoParquetInputFormat, classOf[Void], classOf[Person.Builder], job)
+		FileOutputFormat.setOutputPath(job, new Path(outputPath))
 
-        FileInputFormat.addInputPath(job, new Path(inputPath))
+		ProtoParquetOutputFormat.setProtobufClass(job, classOf[Person])
+		ParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY)
+		ParquetOutputFormat.setEnableDictionary(job, true)
 
-        //schema projection: don't read type of phone type attribute
-        val projection = "message Person {\n" +
-                "  required binary name (UTF8);\n" +
-                "  required int32 id;\n" +
-                "  optional binary email (UTF8);\n" +
-                "  repeated group phone {\n" +
-                "    required binary number (UTF8);\n" +
-                "  }\n" +
-                "}"
-        ProtoParquetInputFormat.setRequestedProjection(job, projection)
+		// Output & Execute
+		data.output(parquetFormat)
+	}
 
-        //native predicate push down: read only records which have name = "Felix"
-	val name = binaryColumn("name")
-	val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
-	ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
+	def readProtobuf(env: ExecutionEnvironment, inputPath: String): DataSet[Tuple2[Void, Person]] = {
+		val job = Job.getInstance
 
-        val data = env.createInput(parquetFormat)
+		val parquetFormat = new HadoopInputFormat[Void, Person.Builder](new ProtoParquetInputFormat, classOf[Void], 
+			classOf[Person.Builder], job)
 
-        return data.asInstanceOf[DataSet[Tuple2[Void,Person]]]
-    }
+		FileInputFormat.addInputPath(job, new Path(inputPath))
+
+		//schema projection: don't read type of phone type attribute
+		val projection = "message Person {\n" +
+			"  required binary name (UTF8);\n" +
+			"  required int32 id;\n" +
+			"  optional binary email (UTF8);\n" +
+			"  repeated group phone {\n" +
+			"    required binary number (UTF8);\n" +
+			"  }\n" +
+			"}"
+		ProtoParquetInputFormat.setRequestedProjection(job, projection)
+
+		//native predicate push down: read only records which have name = "Felix"
+		val name = binaryColumn("name")
+		val namePred = FilterApi.eq(name, Binary.fromString("Felix"))
+		ParquetInputFormat.setFilterPredicate(job.getConfiguration, namePred)
+
+		val data = env.createInput(parquetFormat)
+
+		return data.asInstanceOf[DataSet[Tuple2[Void, Person]]]
+	}
 
 
 }

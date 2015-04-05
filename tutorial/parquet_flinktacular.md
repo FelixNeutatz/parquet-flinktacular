@@ -512,5 +512,13 @@ GROUP BY
 
 </div>
 </div>
-The compression works in this case even better. The CSV files are compressed down to one third. But since the column selectivity of this query is not that drastic anymore (10 out of 33 columns) the Parquet reading performance in comparison to the CSV reader is rather bad in this case. For [TPC-H](http://www.tpc.org/tpch/) query3, the CSV reader is twice as fast as the Parquet reader.
+The compression works in this case even better. The CSV files are compressed down to one third. But since the column selectivity of this query is not that drastic anymore (10 out of 33 columns) the Parquet reading performance in comparison to the CSV reader is rather bad in this case. For [TPC-H](http://www.tpc.org/tpch/) query 3, the CSV reader is twice as fast as the Parquet reader.
 
+The implementation of the corresponding query can also be found on [Github](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/experiments/TPCH)
+
+These two experiments only give a small glimpse on the performance of Parquet. You find more detailed information on the [Parquet webpage](http://parquet.incubator.apache.org/).
+
+
+### Conclusion
+
+Parquet is an extremely useful format to store real Big Data. It is highly flexible because it is not bound to any limitations in the data schema. Parquet is especially awesome when a query has low selectivity in terms of columns. Then the column store architecture really pays of.

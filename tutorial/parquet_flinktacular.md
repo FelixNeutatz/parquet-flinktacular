@@ -30,7 +30,7 @@ Hadoop Input Formats, please refer to [Hadoop Compatibility](http://flink.apache
 
 *"[Parquet](http://parquet.incubator.apache.org/) is a columnar storage format for Hadoop that supports complex nested data."*
 
-Parquet is an open source project. Cloudera and Twitter are the major contributors. The idea for Parquet came from Google. They introduced their system called [Dremel](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36632.pdf)
+Parquet is an Apache open source project. Cloudera and Twitter are the major contributors. The idea for Parquet came from Google. They introduced their system called [Dremel](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36632.pdf)
 which brings the advantages of columnar storage and nested data together. Parquet is implementing this concept in Hadoop. Since Flink provides a seamless integration for Hadoop formats, we can leverage all the advantages of Parquet in Flink.
 
 A [columnar storage format](http://en.wikipedia.org/wiki/Column-oriented_DBMS) brings a lot of advantages. The first one is [schema projection](#schema-projection). This makes it possible to read only those columns which are really needed in your application. 
@@ -516,9 +516,9 @@ The compression works in this case even better. The CSV files are compressed dow
 
 The implementation of the corresponding query can also be found on [Github](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/experiments/TPCH)
 
-These two experiments only give a small glimpse on the performance of Parquet. You find more detailed information on the [Parquet webpage](http://parquet.incubator.apache.org/).
+These two experiments only give a small glimpse on the performance of Parquet. You find more detailed information on the [Parquet web page](http://parquet.incubator.apache.org/).
 
 
 ### Conclusion
 
-Parquet is an extremely useful format to store real Big Data. It is highly flexible because it is not bound to any limitations in the data schema. Parquet is especially awesome when a query has low selectivity in terms of columns. Then the column store architecture really pays of.
+Parquet is an extremely useful format to store real Big Data. It is highly flexible because it is not bound by any limitations in the data schema. Parquet is especially awesome when a query has low selectivity in terms of columns. Then the column store architecture really pays of.

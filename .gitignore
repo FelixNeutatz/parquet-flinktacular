@@ -1,3 +1,7 @@
+java/experiments/TPCH/.idea/
+java/experiments/TPCH/commons/target/
+java/experiments/TPCH/flink/target/
+java/experiments/TPCH/target/
 java/experiments/TPCDS/.idea/
 java/experiments/TPCDS/commons/target/
 java/experiments/TPCDS/flink/target/

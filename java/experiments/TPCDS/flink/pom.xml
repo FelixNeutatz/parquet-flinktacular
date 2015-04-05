@@ -12,7 +12,6 @@
     <artifactId>flink</artifactId>
 
     <repositories>
-
         <repository>
             <id>sonatype-nexus-snapshots</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>

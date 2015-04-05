@@ -35,10 +35,10 @@ which brings the advantages of columnar storage and nested data together. Parque
 
 A [columnar storage format](http://en.wikipedia.org/wiki/Column-oriented_DBMS) brings a lot of advantages. The first one is [schema projection](#schema-projection). This makes it possible to read only those columns which are really needed in your application. 
 
-Moreover column stores are highly compression friendly. This means compression algorithms work faster and can compress better, because information entropy per column is lower than per row. E.g if you imagine a column `phone number`, the values in this column are really similar. Maybe most of them have even the same area code. This high data value locality allows it to apply all kinds of compression. 
+Moreover column stores are highly compression friendly. This means compression algorithms work faster and can compress better, because information entropy per column is lower than per row. E.g. if you imagine a column `phone number`, the values in this column are really similar. Maybe most of them have even the same area code. This high data value locality allows it to apply all kinds of compression. 
 Parquet supports GZIP, LZO and SNAPPY. 
 
-Moreover it is possible to use serveral types of encoding: Bit Packing, Run Length encoding, Dictionary encoding, ...
+Moreover it is possible to use several types of encoding: Bit Packing, Run Length encoding, Dictionary encoding, ...
 Another nice feature of Parquet is the native implementation of [predicate pushdown](#native-predicate-pushdown). This makes it possible to filter records on the lowest level.
 
 The key differentiating factor in comparison to other columnar store formats is that Parquet allows the user to [define a schema](#define-your-schema) which can be arbitrarily nested.
@@ -306,9 +306,9 @@ data.output(parquetFormat)
 
 ### Read Parquet
 
-The cool thing about Parquet is that it recognices on its own, which compression and encoding is used in the current file. Therefore you only have to specify the input path and the schema of the data which you want to read.
+The cool thing about Parquet is that it recognises on its own, which compression and encoding is used in the current file. Therefore you only have to specify the input path and the schema of the data which you want to read.
 
-Moreover you can apply native predicate pushdown by `ParquetInputFormat.setUnboundRecordFilter()`. How to create your custom predicate is described in the [next chapter](#Native-predicate-pushdown). 
+Moreover you can apply native predicate pushdown by defining your self-tailored predicates. How to create your custom predicate is described in the [next chapter](#Native-predicate-pushdown). 
 
 You can also leverage schema projection. Schema projection is highly dependent on the serialization framework. This is described in detail in the chapter [schema projection](#Schema-projection).
 
@@ -326,9 +326,6 @@ HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(
 
 FileInputFormat.addInputPath(job, new Path(inputPath));
 
-//native predicate push down: read only records which satisfy a given constraint
-ParquetInputFormat.setUnboundRecordFilter(job, PersonFilter.class);
-
 DataSet<Tuple2<Void,Person.Builder>> data = env.createInput(hadoopInputFormat);
 ~~~
 
@@ -344,9 +341,6 @@ val parquetFormat = new HadoopInputFormat[Void,Person.Builder](
 
 FileInputFormat.addInputPath(job, new Path(inputPath))
 
-//native predicate push down: read only records which satisfy a given constraint
-ParquetInputFormat.setUnboundRecordFilter(job, classOf[PersonFilter])
-
 val data = env.createInput(parquetFormat)
 ~~~
 
@@ -358,7 +352,7 @@ val data = env.createInput(parquetFormat)
 
 The easiest type of predicate is an equality predicate. In the example below we accept only those records which have the `name = "Felix"`. You can even specify more complex constraints with and, or, not ... 
 
-If you want to implement more compex predicates, you find more examples [here](https://github.com/apache/incubator-parquet-mr/blob/807915b4cacede6a8de49630469b673b7c248a6f/parquet-column/src/test/java/parquet/filter2/predicate/TestFilterApiMethods.java).
+If you want to implement more complex predicates, you find more examples [here](https://github.com/apache/incubator-parquet-mr/blob/807915b4cacede6a8de49630469b673b7c248a6f/parquet-column/src/test/java/parquet/filter2/predicate/TestFilterApiMethods.java).
 
 <div class="codetabs" markdown="1">
 <div data-lang="java" markdown="1">
@@ -443,7 +437,7 @@ AvroParquetInputFormat.setRequestedProjection(job, projection);
 </div>
 
 
-### Experiment
+### Experiments
 
 When it comes to file formats, two metrics are especially interesting:
 
@@ -458,30 +452,65 @@ In SQL query 55 looks like this:
 <div data-lang="SQL" markdown="1">
 
 ~~~sql
-select  i_brand_id brand_id, i_brand brand,
-        sum(ss_ext_sales_price) ext_price
-from date_dim, store_sales, item
-where date_dim.d_date_sk = store_sales.ss_sold_date_sk
-        and store_sales.ss_item_sk = item.i_item_sk
-        and i_manager_id = 28
-        and d_moy = 11
-        and d_year = 1999
-group by i_brand, i_brand_id
-order by ext_price desc, i_brand_id
-limit 100
+SELECT
+     i_brand_id AS brand_id,
+     i_brand AS brand,
+     SUM(ss_ext_sales_price) AS ext_price
+FROM date_dim, 
+     store_sales, 
+     item
+WHERE date_dim.d_date_sk = store_sales.ss_sold_date_sk
+      AND store_sales.ss_item_sk = item.i_item_sk
+      AND i_manager_id = 28
+      AND d_moy = 11
+      AND d_year = 1999
+GROUP BY i_brand, i_brand_id
+ORDER BY ext_price desc, i_brand_id
+LIMIT 100
 ~~~
+
+</div>
+</div>
 
 This query joins three tables and selects only very few of the corresponding columns. This emphasizes the strength of Parquet: [schema projection](#Schema-projection).
 
-For the experiments I used scaling factor 20 (which generates 20GB of csv data). The three tables Date_Dim, Store_Sales and Item are only a part of this data (8GB).
+For the experiments I used the very small scaling factor 20 (which generates 20GB of CSV data). The three tables Date_Dim, Store_Sales and Item are only a part of this data (8GB).
 
 Using Snappy compression and dictionary encoding the three tables are compressed to half their original size. This shows that Parquet is highly space efficient.
 
-To compare the reading performance, I implemented a csv reader variant for the same query. The result: We gain a speed up of up to 2 using Parquet. This speed up will even increase when it comes to greater scaling factors.
+To compare the reading performance, I implemented a CSV reader variant for the same query. The result: We gain a speed up of up to 2 using Parquet. This speed up will even increase when it comes to greater scaling factors.
 
-This is the perfect use case for Parquet. We are only interested in 10 columns out of a total of 73 columns. Because of the column store architecture the Parquet reader only needs to read the 10 columns whereas the csv reader has to read all 73 columns. If this ratio is not this drastic, the csv reader is faster than the Parquet reader.
+This is the perfect use case for Parquet. We are only interested in 10 columns out of a total of 73 columns. Because of the column store architecture the Parquet reader only needs to read the 10 columns whereas the CSV reader has to read all 73 columns. If this ratio is not this drastic, the CSV reader is faster than the Parquet reader.
 
 You can find my implementation of [TPC-DS](http://www.tpc.org/tpcds/) query 55 on [Github](https://github.com/FelixNeutatz/parquet-flinktacular/tree/master/java/experiments/TPCDS).
 
+Moreover, I also implemented query 3 of [TPC-H Benchmark](http://www.tpc.org/tpch/):
+
+<div class="codetabs" markdown="1">
+<div data-lang="SQL" markdown="1">
+
+~~~sql
+SELECT
+     l_orderkey,
+     SUM(l_extendedprice * (1 - l_discount)) AS revenue,
+     o_orderdate,
+     o_shippriority
+FROM customer,
+     orders,
+     lineitem
+WHERE
+     c_mktsegment = 'AUTOMOBILE'
+     AND c_custkey = o_custkey
+     AND l_orderkey = o_orderkey
+     AND o_orderdate < date '1995-03-12'
+     AND l_shipdate > date '1995-03-12'
+GROUP BY
+     l_orderkey,
+     o_orderdate,
+     o_shippriority;
+~~~
+
 </div>
 </div>
+The compression works in this case even better. The CSV files are compressed down to one third. But since the column selectivity of this query is not that drastic anymore (10 out of 33 columns) the Parquet reading performance in comparison to the CSV reader is rather bad in this case. For [TPC-H](http://www.tpc.org/tpch/) query3, the CSV reader is twice as fast as the Parquet reader.
+

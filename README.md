@@ -18,7 +18,7 @@ In the __flink__ folder there are your Flink jobs which read and write Parquet.
 So choose your template project, download the corresponding folder and run: 
 
 ~~~bash
-$ mvn clean compile package
+$ mvn clean install package
 ~~~
 
 The more detailed tutorial can be found [here](https://github.com/FelixNeutatz/parquet-flinktacular/blob/master/tutorial/parquet_flinktacular.pdf) :)

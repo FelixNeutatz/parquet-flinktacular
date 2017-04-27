@@ -18,90 +18,98 @@
 
 package flink.parquet;
 
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
-import org.apache.flink.api.java.typeutils.TypeExtractor;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.hadoop.mapreduce.HadoopInputFormat;
-import org.apache.flink.api.java.hadoop.mapreduce.HadoopOutputFormat;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
-
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import parquet.filter2.predicate.FilterPredicate;
-import parquet.hadoop.ParquetInputFormat;
-import parquet.hadoop.ParquetOutputFormat;
-import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.hadoop.thrift.ParquetThriftOutputFormat;
-import parquet.hadoop.thrift.ParquetThriftInputFormat;
-import parquet.io.api.Binary;
+import static parquet.filter2.predicate.FilterApi.binaryColumn;
+import static parquet.filter2.predicate.FilterApi.eq;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import flink.parquet.thrift.*;
+import org.apache.flink.api.common.io.OutputFormat;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.LocalEnvironment;
+import org.apache.flink.api.java.hadoop.mapreduce.HadoopInputFormat;
+import org.apache.flink.api.java.hadoop.mapreduce.HadoopOutputFormat;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
+import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import static parquet.filter2.predicate.FilterApi.eq;
-import static parquet.filter2.predicate.FilterApi.binaryColumn;
-import static parquet.filter2.predicate.Operators.BinaryColumn;
+import flink.parquet.thrift.Person;
+import flink.parquet.thrift.PhoneNumber;
 
+import parquet.filter2.predicate.FilterPredicate;
+import parquet.filter2.predicate.Operators.BinaryColumn;
+import parquet.hadoop.ParquetInputFormat;
+import parquet.hadoop.ParquetOutputFormat;
+import parquet.hadoop.metadata.CompressionCodecName;
+import parquet.hadoop.thrift.ParquetThriftInputFormat;
+import parquet.hadoop.thrift.ParquetThriftOutputFormat;
+import parquet.io.api.Binary;
 
 public class ParquetThriftExample {
 
 	public static void main(String[] args) throws Exception {
 
-		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+		if (env instanceof LocalEnvironment) {
+			Configuration conf = new Configuration();
+			// conf.setString(ConfigConstants.TASK_MANAGER_TMP_DIR_KEY,
+			// FLINK_TEST_TMP_DIR);
+			// conf.setString(ConfigConstants.BLOB_STORAGE_DIRECTORY_KEY,
+			// FLINK_TEST_TMP_DIR);
+			conf.setLong(ConfigConstants.TASK_MANAGER_NETWORK_NUM_BUFFERS_KEY, 4096 * 4);
+			env = ExecutionEnvironment.createLocalEnvironment(conf);
+			env.setParallelism(Runtime.getRuntime().availableProcessors());
+		}
 
-		//output
-		Person person = generateSampleObject();
-		DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
-		writeThrift(output, "newpath");
+		// output
+		int size = 1200;
+		Person[] people = new Person[size];
+		for (int j = 0; j < size; j++) {
+			people[j] = generateSampleObject(j);
+		}
+		DataSet<Person> output = env.fromElements(people);
+
+		writeThrift(output, "/tmp/thrift-test");
 		output.print();
 
-		//input
-		DataSet<Tuple2<Void, Person>> input = readThrift(env, "newpath");
+		// input
+		DataSet<Tuple2<Void, Person>> input = readThrift(env, "/tmp/thrift-test");
 		input.print();
 
-		env.execute("Parquet Thrift Example");
+		// env.execute("Parquet Thrift Example");
 	}
 
-
-	public static Person generateSampleObject() {
+	public static Person generateSampleObject(int i) {
 		Person person = new Person();
-		person.id = 42;
-		person.name = "Felix";
+		person.id = i;
+		person.name = "Felix" + i;
 
 		List<PhoneNumber> phoneNumberList = new ArrayList<PhoneNumber>();
 		PhoneNumber phoneNumber = new PhoneNumber();
-		phoneNumber.setType(PhoneType.WORK);
-		phoneNumber.setNumber("0123456");
+		phoneNumber.setNumber("0123456" + i);
 		phoneNumberList.add(phoneNumber);
 		person.setPhone(phoneNumberList);
 
 		return person;
 	}
 
-	public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
-		List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
-		TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class), 
-			TypeExtractor.getForClass(Person.class));
-
-		DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
-
-		return data;
-	}
-
-	public static void writeThrift(DataSet<Tuple2<Void, Person>> data, String outputPath) throws IOException {
+	public static void writeThrift(DataSet<Person> data, String outputPath) throws IOException {
 		// Set up the Hadoop Input Format
 		Job job = Job.getInstance();
 
 		// Set up Hadoop Output Format
-		HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new ParquetThriftOutputFormat(), job);
+		OutputFormat<Tuple2<Void, Person>> hadoopOutputFormat = new HadoopOutputFormat<>(
+				new ParquetThriftOutputFormat<>(), job);
 
 		FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
@@ -110,16 +118,19 @@ public class ParquetThriftExample {
 
 		ParquetThriftOutputFormat.setThriftClass(job, Person.class);
 
+		final TypeInformation<Tuple2<Void, Person>> returnType = new TupleTypeInfo<>(
+		        TypeExtractor.getForClass(Void.class), TypeExtractor.getForClass(Person.class));
+
 		// Output & Execute
-		data.output(hadoopOutputFormat);
+		data.map(x-> new Tuple2<Void, Person>(null, x)).returns(returnType).output(hadoopOutputFormat);
 	}
 
-	public static DataSet<Tuple2<Void, Person>> readThrift(ExecutionEnvironment env, String inputPath) throws 
-		IOException {
+	public static DataSet<Tuple2<Void, Person>> readThrift(ExecutionEnvironment env, String inputPath)
+			throws IOException {
 		Job job = Job.getInstance();
 
-		HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new ParquetThriftInputFormat(), Void.class, Person
-			.class, job);
+		HadoopInputFormat<Void, Person> hadoopInputFormat = new HadoopInputFormat<>(new ParquetThriftInputFormat<>(),
+				Void.class, Person.class, job);
 
 		// schema projection: don't read attributes id and email
 		job.getConfiguration().set("parquet.thrift.column.filter", "name;id;email;phone/number");
@@ -128,7 +139,7 @@ public class ParquetThriftExample {
 
 		// push down predicates: get all persons with name = "Felix"
 		BinaryColumn name = binaryColumn("name");
-		FilterPredicate namePred = eq(name, Binary.fromString("Felix"));
+		FilterPredicate namePred = eq(name, Binary.fromString("Felix100"));
 		ParquetInputFormat.setFilterPredicate(job.getConfiguration(), namePred);
 
 		DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);

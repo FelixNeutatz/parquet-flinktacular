@@ -101,7 +101,6 @@ public class TPCDSQuery55CSV {
 
 		dataDims = dataDims.filter(
 			new FilterFunction<DateDim>() {
-				@Override
 				public boolean filter(DateDim d) {
 					return d.getD_moy() == 11L && d.getD_year() == 1999L;
 				}
@@ -109,7 +108,6 @@ public class TPCDSQuery55CSV {
 
 		item = item.filter(
 			new FilterFunction<Item>() {
-				@Override
 				public boolean filter(Item i) {
 					return i.getI_manager_id() == 28L;
 				}
@@ -129,7 +127,6 @@ public class TPCDSQuery55CSV {
 
 	public static class DataDimAndStoreSales implements JoinFunction<DateDim, StoreSales, Tuple2<Double, Long>> {
 
-		@Override
 		public Tuple2<Double, Long> join(DateDim d, StoreSales s) {
 			return new Tuple2<Double, Long>(s.getSs_ext_sales_price(), s.getSs_item_sk());
 		}
@@ -138,7 +135,6 @@ public class TPCDSQuery55CSV {
 	public static class DataDimAndStoreSalesAndItems implements JoinFunction<Tuple2<Double, Long>, Item, Tuple3<Long, 
 		String, Double>> {
 
-		@Override
 		public Tuple3<Long, String, Double> join(Tuple2<Double, Long> twoTables, Item i) {
 			return new Tuple3<Long, String, Double>(i.getI_brand_id(), i.getI_brand(), twoTables.f0);
 		}
@@ -176,7 +172,6 @@ public class TPCDSQuery55CSV {
 	}
 
 	private static final class MapItem implements MapFunction<ItemString, Item> {
-		@Override
 		public Item map(ItemString value) {
 			Item tuple = new Item();
 			tuple.f0 = Util.emptyStringToLongZero(value.f0);
@@ -188,7 +183,6 @@ public class TPCDSQuery55CSV {
 	}
 
 	private static final class MapDateDim implements MapFunction<DateDimString, DateDim> {
-		@Override
 		public DateDim map(DateDimString value) {
 			DateDim tuple = new DateDim();
 			tuple.f0 = Util.emptyStringToLongZero(value.f0);
@@ -199,7 +193,6 @@ public class TPCDSQuery55CSV {
 	}
 
 	private static final class MapStoreSales implements MapFunction<StoreSalesString, StoreSales> {
-		@Override
 		public StoreSales map(StoreSalesString value) {
 			StoreSales tuple = new StoreSales();
 			tuple.f0 = Util.emptyStringToLongZero(value.f0);

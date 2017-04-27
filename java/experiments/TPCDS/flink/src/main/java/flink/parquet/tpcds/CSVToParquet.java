@@ -42,17 +42,17 @@ public class CSVToParquet {
 		int splitNumber = 4;
 
 		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		env.setDegreeOfParallelism(splitNumber);
+		env.setDefaultLocalParallelism(splitNumber);
 		createStoreSales(env);
 		env.execute("convert store sales");
 
 		final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-		env2.setDegreeOfParallelism(splitNumber);
+		env2.setDefaultLocalParallelism(splitNumber);
 		createItem(env2);
 		env2.execute("convert items");
 
 		final ExecutionEnvironment env3 = ExecutionEnvironment.getExecutionEnvironment();
-		env3.setDegreeOfParallelism(splitNumber);
+		env3.setDefaultLocalParallelism(splitNumber);
 		createDateDim(env3);
 		env3.execute("convert datedims");
 	}
@@ -178,7 +178,6 @@ public class CSVToParquet {
 
 
 	public static class ItemToParquet implements MapFunction<ItemString, Tuple2<Void, ItemTable>> {
-		@Override
 		public Tuple2<Void, ItemTable> map(ItemString csv) {
 			ItemTable items = new ItemTable();
 			items.setI_item_sk(csv.f0);
@@ -210,7 +209,6 @@ public class CSVToParquet {
 
 
 	public static class StoreSalesToParquet implements MapFunction<StoreSalesString, Tuple2<Void, StoreSalesTable>> {
-		@Override
 		public Tuple2<Void, StoreSalesTable> map(StoreSalesString csv) {
 			StoreSalesTable storesales = new StoreSalesTable();
 			storesales.setSs_sold_date_sk(Util.emptyStringToLongZero(csv.f0));
@@ -244,7 +242,6 @@ public class CSVToParquet {
 
 
 	public static class DateDimToParquet implements MapFunction<DateDimString, Tuple2<Void, DateDimTable>> {
-		@Override
 		public Tuple2<Void, DateDimTable> map(DateDimString csv) {
 			DateDimTable datedims = new DateDimTable();
 			datedims.setD_date_sk(csv.f0);

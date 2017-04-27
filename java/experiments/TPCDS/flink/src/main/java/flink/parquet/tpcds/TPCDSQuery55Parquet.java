@@ -121,7 +121,6 @@ public class TPCDSQuery55Parquet {
 	}
 
 	public static class DataDimAndStoreSales implements JoinFunction<DataDim, StoreSales, Tuple2<Double, Long>> {
-		@Override
 		public Tuple2<Double, Long> join(DataDim d, StoreSales s) {
 			return new Tuple2<Double, Long>(s.getSs_ext_sales_price(), s.getSs_item_sk());
 		}
@@ -129,7 +128,6 @@ public class TPCDSQuery55Parquet {
 
 	public static class DataDimAndStoreSalesAndItems implements JoinFunction<Tuple2<Double, Long>, Item, Tuple3<Long, 
 		String, Double>> {
-		@Override
 		public Tuple3<Long, String, Double> join(Tuple2<Double, Long> twoTables, Item i) {
 			return new Tuple3<Long, String, Double>(i.getI_brand_id(), i.getI_brand(), twoTables.f0);
 		}
@@ -171,7 +169,6 @@ public class TPCDSQuery55Parquet {
 
 	private static final class MapDataDim implements MapFunction<Tuple2<Void, DateDimTable>, DataDim> {
 
-		@Override
 		public DataDim map(Tuple2<Void, DateDimTable> value) {
 			DataDim tuple = new DataDim();
 			tuple.f0 = value.f1.getD_date_sk();
@@ -182,7 +179,6 @@ public class TPCDSQuery55Parquet {
 	}
 
 	private static final class MapItem implements MapFunction<Tuple2<Void, ItemTable>, Item> {
-		@Override
 		public Item map(Tuple2<Void, ItemTable> value) {
 			Item tuple = new Item();
 			tuple.f0 = value.f1.getI_item_sk();
@@ -194,7 +190,6 @@ public class TPCDSQuery55Parquet {
 	}
 
 	private static final class MapStoreSales implements MapFunction<Tuple2<Void, StoreSalesTable>, StoreSales> {
-		@Override
 		public StoreSales map(Tuple2<Void, StoreSalesTable> value) {
 			StoreSales tuple = new StoreSales();
 			tuple.f0 = value.f1.getSs_sold_date_sk();

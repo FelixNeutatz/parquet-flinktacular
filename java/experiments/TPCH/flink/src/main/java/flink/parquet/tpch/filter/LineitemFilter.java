@@ -32,7 +32,6 @@ public class LineitemFilter implements UnboundRecordFilter {
 
 	public class AfterDate implements ColumnPredicates.PredicateFunction<String> {
 
-		@Override
 		public boolean functionToApply(String input) {
 			DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 			Date date = null;

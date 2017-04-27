@@ -18,22 +18,20 @@
 
 package flink.parquet
 
+import de.javakaffee.kryoserializers.protobuf.ProtobufSerializer
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import parquet.filter2.predicate.{FilterApi, FilterPredicate}
-
 import parquet.hadoop.ParquetOutputFormat
 import parquet.hadoop.ParquetInputFormat
 import parquet.hadoop.metadata.CompressionCodecName
 import parquet.io.api.Binary
 import parquet.proto.ProtoParquetInputFormat
 import parquet.proto.ProtoParquetOutputFormat
-
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.hadoop.mapreduce._
-
 import flink.parquet.proto.PersonProto.Person
 import parquet.filter2.predicate.FilterApi.binaryColumn
 
@@ -43,24 +41,27 @@ object ParquetProtobufExample {
 	def main(args: Array[String]) {
 
 		val env = ExecutionEnvironment.getExecutionEnvironment
+    // register the Google Protobuf serializer with Kryo
+    env.getConfig.registerTypeWithKryoSerializer(classOf[Person],
+      classOf[ProtobufSerializer[Person]])
 
 		//output
 		val data = generateDataSet(env)
 
 		writeProtobuf(data, "newpath")
 
-		data.print()
+		//data.print()
 
 		env.execute("Parquet Output")
 
 		//input
-		val env2 = ExecutionEnvironment.getExecutionEnvironment
 
-		val input = readProtobuf(env2, "newpath")
+		val input = readProtobuf(env, "newpath")
 
-		input.map { pair => pair._2.asInstanceOf[Person.Builder].build}.print
+		input.map { pair => pair._2.asInstanceOf[Person.Builder].build}
+      .print
 
-		env2.execute("Parquet input")
+		//env.execute("Parquet input")
 	}
 
 
@@ -77,8 +78,9 @@ object ParquetProtobufExample {
 	}
 
 	def generateDataSet(env: ExecutionEnvironment): DataSet[Tuple2[Void, Person]] = {
-		val samples = List(generateSampleObject(42, "Felix", "0123"), generateSampleObject(43, "Robert", "4567"))
-
+		val samples = List(
+      generateSampleObject(42, "Felix", "0123"),
+			generateSampleObject(43, "Robert", "4567"))
 		val data = env.fromCollection(samples)
 
 		return data

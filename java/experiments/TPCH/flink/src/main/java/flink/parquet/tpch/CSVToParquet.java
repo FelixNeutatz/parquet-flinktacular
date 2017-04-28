@@ -43,17 +43,17 @@ public class CSVToParquet {
         
 		
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        env.setDegreeOfParallelism(splitNumber);
+        env.setDefaultLocalParallelism(splitNumber);
         createCustomers(env);
         env.execute("convert customers");
 		
         final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-        env2.setDegreeOfParallelism(splitNumber);
+        env2.setDefaultLocalParallelism(splitNumber);
         createOrders(env2);
         env2.execute("convert orders");
 		
 		final ExecutionEnvironment env3 = ExecutionEnvironment.getExecutionEnvironment();
-        env3.setDegreeOfParallelism(splitNumber);
+        env3.setDefaultLocalParallelism(splitNumber);
         createLineitems(env3);
         env3.execute("convert lineitems");        
     }

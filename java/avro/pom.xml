@@ -22,11 +22,11 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>flink.parquet.avro</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>flink-avro-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>commons</module>
-        <module>flink</module>
+        <module>flink-avro-commons</module>
+        <module>flink-avro</module>
     </modules>
     <packaging>pom</packaging>
 

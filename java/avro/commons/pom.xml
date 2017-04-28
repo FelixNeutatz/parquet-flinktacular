@@ -3,16 +3,16 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>parent</artifactId>
+        <artifactId>flink-avro-parent</artifactId>
         <groupId>flink.parquet.avro</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>commons</artifactId>
+    <artifactId>flink-avro-commons</artifactId>
 
     <properties>
-        <avro.version>1.7.6</avro.version>
+        <avro.version>1.8.1</avro.version>
     </properties>
 
     <dependencies>
@@ -53,8 +53,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -78,6 +78,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
                             </transformers>
+                            <outputDirectory>${basedir}/src/main/java</outputDirectory> 
                         </configuration>
                     </execution>
                 </executions>
@@ -86,7 +87,7 @@
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
                 <version>${avro.version}</version>
-                <executions>
+                <executions>   <!--  
                     <execution>
                         <phase>generate-sources</phase>
                         <goals>
@@ -94,7 +95,7 @@
                             <goal>protocol</goal>
                             <goal>idl-protocol</goal>
                         </goals>
-                    </execution>
+                    </execution> -->
                 </executions>
             </plugin>
         </plugins>

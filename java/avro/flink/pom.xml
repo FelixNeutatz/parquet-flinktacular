@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>parent</artifactId>
+        <artifactId>flink-avro-parent</artifactId>
         <groupId>flink.parquet.avro</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>flink</artifactId>
+    <artifactId>flink-avro</artifactId>
 
     <repositories>
         <repository>
@@ -28,20 +28,20 @@
         <!-- Compiled custom Avro classes-->
         <dependency>
             <groupId>flink.parquet.avro</groupId>
-            <artifactId>commons</artifactId>
+            <artifactId>flink-avro-commons</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Flink dependencies -->
         <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients</artifactId>
-            <version>0.8.1</version>
-        </dependency>
+    		<groupId>org.apache.flink</groupId>
+    		<artifactId>flink-clients_2.10</artifactId>
+    		<version>1.2.0</version>
+		</dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
-            <version>0.8.1</version>
+            <version>1.2.0</version>
         </dependency>
 
         <!-- Parquet dependencies -->
@@ -55,6 +55,13 @@
             <artifactId>parquet-avro</artifactId>
             <version>1.6.0rc4</version>
         </dependency>
+        
+        <dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+    <version>21.0</version>
+</dependency>
+        
     </dependencies>
 
     <build>
@@ -64,8 +71,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>

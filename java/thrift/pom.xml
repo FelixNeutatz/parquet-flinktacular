@@ -22,7 +22,7 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>flink.parquet.thrift</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>flink-thrift-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>commons</module>

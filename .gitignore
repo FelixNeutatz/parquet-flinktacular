@@ -32,6 +32,7 @@ tutorial/target/
 .project
 .settings/
 target/
+*.cache-main
 *.iml
 *~
 

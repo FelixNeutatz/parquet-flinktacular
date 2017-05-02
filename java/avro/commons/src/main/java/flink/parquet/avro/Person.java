@@ -10,8 +10,8 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class Person extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = -2687593823766848626L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Person\",\"namespace\":\"flink.parquet.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"email\",\"type\":[\"string\",\"null\"]},{\"name\":\"phone\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"PhoneNumber\",\"fields\":[{\"name\":\"number\",\"type\":\"string\"},{\"name\":\"type\",\"type\":[{\"type\":\"enum\",\"name\":\"PhoneType\",\"symbols\":[\"MOBILE\",\"HOME\",\"WORK\"]},\"null\"],\"default\":\"HOME\"}]}}}]}");
+  private static final long serialVersionUID = -4372457208513393133L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"Person\",\"namespace\":\"flink.parquet.avro\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"email\",\"type\":[\"null\",\"string\"],\"default\":null},{\"name\":\"phone\",\"type\":{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"PhoneNumber\",\"fields\":[{\"name\":\"number\",\"type\":\"string\"},{\"name\":\"phoneType\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"PhoneType\",\"symbols\":[\"MOBILE\",\"HOME\",\"WORK\"]}],\"default\":\"HOME\"}]}}}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence name;
   @Deprecated public int id;

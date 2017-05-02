@@ -10,11 +10,11 @@ import org.apache.avro.specific.SpecificData;
 @SuppressWarnings("all")
 @org.apache.avro.specific.AvroGenerated
 public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
-  private static final long serialVersionUID = 7445886946109685531L;
-  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PhoneNumber\",\"namespace\":\"flink.parquet.avro\",\"fields\":[{\"name\":\"number\",\"type\":\"string\"},{\"name\":\"type\",\"type\":[{\"type\":\"enum\",\"name\":\"PhoneType\",\"symbols\":[\"MOBILE\",\"HOME\",\"WORK\"]},\"null\"],\"default\":\"HOME\"}]}");
+  private static final long serialVersionUID = 1709638050328921123L;
+  public static final org.apache.avro.Schema SCHEMA$ = new org.apache.avro.Schema.Parser().parse("{\"type\":\"record\",\"name\":\"PhoneNumber\",\"namespace\":\"flink.parquet.avro\",\"fields\":[{\"name\":\"number\",\"type\":\"string\"},{\"name\":\"phoneType\",\"type\":[\"null\",{\"type\":\"enum\",\"name\":\"PhoneType\",\"symbols\":[\"MOBILE\",\"HOME\",\"WORK\"]}],\"default\":\"HOME\"}]}");
   public static org.apache.avro.Schema getClassSchema() { return SCHEMA$; }
   @Deprecated public java.lang.CharSequence number;
-  @Deprecated public flink.parquet.avro.PhoneType type;
+  @Deprecated public flink.parquet.avro.PhoneType phoneType;
 
   /**
    * Default constructor.  Note that this does not initialize fields
@@ -26,11 +26,11 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
   /**
    * All-args constructor.
    * @param number The new value for number
-   * @param type The new value for type
+   * @param phoneType The new value for phoneType
    */
-  public PhoneNumber(java.lang.CharSequence number, flink.parquet.avro.PhoneType type) {
+  public PhoneNumber(java.lang.CharSequence number, flink.parquet.avro.PhoneType phoneType) {
     this.number = number;
-    this.type = type;
+    this.phoneType = phoneType;
   }
 
   public org.apache.avro.Schema getSchema() { return SCHEMA$; }
@@ -38,7 +38,7 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
   public java.lang.Object get(int field$) {
     switch (field$) {
     case 0: return number;
-    case 1: return type;
+    case 1: return phoneType;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -48,7 +48,7 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
   public void put(int field$, java.lang.Object value$) {
     switch (field$) {
     case 0: number = (java.lang.CharSequence)value$; break;
-    case 1: type = (flink.parquet.avro.PhoneType)value$; break;
+    case 1: phoneType = (flink.parquet.avro.PhoneType)value$; break;
     default: throw new org.apache.avro.AvroRuntimeException("Bad index");
     }
   }
@@ -70,19 +70,19 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
   }
 
   /**
-   * Gets the value of the 'type' field.
-   * @return The value of the 'type' field.
+   * Gets the value of the 'phoneType' field.
+   * @return The value of the 'phoneType' field.
    */
-  public flink.parquet.avro.PhoneType getType() {
-    return type;
+  public flink.parquet.avro.PhoneType getPhoneType() {
+    return phoneType;
   }
 
   /**
-   * Sets the value of the 'type' field.
+   * Sets the value of the 'phoneType' field.
    * @param value the value to set.
    */
-  public void setType(flink.parquet.avro.PhoneType value) {
-    this.type = value;
+  public void setPhoneType(flink.parquet.avro.PhoneType value) {
+    this.phoneType = value;
   }
 
   /**
@@ -118,7 +118,7 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
     implements org.apache.avro.data.RecordBuilder<PhoneNumber> {
 
     private java.lang.CharSequence number;
-    private flink.parquet.avro.PhoneType type;
+    private flink.parquet.avro.PhoneType phoneType;
 
     /** Creates a new Builder */
     private Builder() {
@@ -135,8 +135,8 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
         this.number = data().deepCopy(fields()[0].schema(), other.number);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.type)) {
-        this.type = data().deepCopy(fields()[1].schema(), other.type);
+      if (isValidValue(fields()[1], other.phoneType)) {
+        this.phoneType = data().deepCopy(fields()[1].schema(), other.phoneType);
         fieldSetFlags()[1] = true;
       }
     }
@@ -151,8 +151,8 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
         this.number = data().deepCopy(fields()[0].schema(), other.number);
         fieldSetFlags()[0] = true;
       }
-      if (isValidValue(fields()[1], other.type)) {
-        this.type = data().deepCopy(fields()[1].schema(), other.type);
+      if (isValidValue(fields()[1], other.phoneType)) {
+        this.phoneType = data().deepCopy(fields()[1].schema(), other.phoneType);
         fieldSetFlags()[1] = true;
       }
     }
@@ -197,40 +197,40 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
     }
 
     /**
-      * Gets the value of the 'type' field.
+      * Gets the value of the 'phoneType' field.
       * @return The value.
       */
-    public flink.parquet.avro.PhoneType getType() {
-      return type;
+    public flink.parquet.avro.PhoneType getPhoneType() {
+      return phoneType;
     }
 
     /**
-      * Sets the value of the 'type' field.
-      * @param value The value of 'type'.
+      * Sets the value of the 'phoneType' field.
+      * @param value The value of 'phoneType'.
       * @return This builder.
       */
-    public flink.parquet.avro.PhoneNumber.Builder setType(flink.parquet.avro.PhoneType value) {
+    public flink.parquet.avro.PhoneNumber.Builder setPhoneType(flink.parquet.avro.PhoneType value) {
       validate(fields()[1], value);
-      this.type = value;
+      this.phoneType = value;
       fieldSetFlags()[1] = true;
       return this;
     }
 
     /**
-      * Checks whether the 'type' field has been set.
-      * @return True if the 'type' field has been set, false otherwise.
+      * Checks whether the 'phoneType' field has been set.
+      * @return True if the 'phoneType' field has been set, false otherwise.
       */
-    public boolean hasType() {
+    public boolean hasPhoneType() {
       return fieldSetFlags()[1];
     }
 
 
     /**
-      * Clears the value of the 'type' field.
+      * Clears the value of the 'phoneType' field.
       * @return This builder.
       */
-    public flink.parquet.avro.PhoneNumber.Builder clearType() {
-      type = null;
+    public flink.parquet.avro.PhoneNumber.Builder clearPhoneType() {
+      phoneType = null;
       fieldSetFlags()[1] = false;
       return this;
     }
@@ -240,7 +240,7 @@ public class PhoneNumber extends org.apache.avro.specific.SpecificRecordBase imp
       try {
         PhoneNumber record = new PhoneNumber();
         record.number = fieldSetFlags()[0] ? this.number : (java.lang.CharSequence) defaultValue(fields()[0]);
-        record.type = fieldSetFlags()[1] ? this.type : (flink.parquet.avro.PhoneType) defaultValue(fields()[1]);
+        record.phoneType = fieldSetFlags()[1] ? this.phoneType : (flink.parquet.avro.PhoneType) defaultValue(fields()[1]);
         return record;
       } catch (Exception e) {
         throw new org.apache.avro.AvroRuntimeException(e);

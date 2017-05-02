@@ -16,26 +16,31 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-            <version>${avro.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-maven-plugin</artifactId>
-            <version>${avro.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-compiler</artifactId>
-            <version>${avro.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-ipc</artifactId>
-            <version>${avro.version}</version>
-        </dependency>
+<!--         <dependency> -->
+<!--             <groupId>org.apache.avro</groupId> -->
+<!--             <artifactId>avro</artifactId> -->
+<!--             <version>${avro.version}</version> -->
+<!--         </dependency> -->
+<!--         <dependency> -->
+<!--             <groupId>org.apache.avro</groupId> -->
+<!--             <artifactId>avro-maven-plugin</artifactId> -->
+<!--             <version>${avro.version}</version> -->
+<!--         </dependency> -->
+<!--         <dependency> -->
+<!--             <groupId>org.apache.avro</groupId> -->
+<!--             <artifactId>avro-compiler</artifactId> -->
+<!--             <version>${avro.version}</version> -->
+<!--         </dependency> -->
+<!--         <dependency> -->
+<!--             <groupId>org.apache.avro</groupId> -->
+<!--             <artifactId>avro-ipc</artifactId> -->
+<!--             <version>${avro.version}</version> -->
+<!--         </dependency> -->
+			<dependency>
+			    <groupId>org.apache.parquet</groupId>
+			    <artifactId>parquet-avro</artifactId>
+			    <version>1.9.0</version>
+			</dependency>
     </dependencies>
 
     <pluginRepositories>
@@ -87,15 +92,18 @@
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>
                 <version>${avro.version}</version>
-                <executions>   <!--  
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>schema</goal>
-                            <goal>protocol</goal>
-                            <goal>idl-protocol</goal>
-                        </goals>
-                    </execution> -->
+				<configuration>
+					<outputDirectory>${basedir}/src/main/java</outputDirectory>
+				</configuration>
+                <executions>     
+<!--                     <execution> -->
+<!--                         <phase>generate-sources</phase> -->
+<!--                         <goals> -->
+<!--                             <goal>schema</goal> -->
+<!--                             <goal>protocol</goal> -->
+<!--                             <goal>idl-protocol</goal> -->
+<!--                         </goals> -->
+<!--                     </execution>  -->
                 </executions>
             </plugin>
         </plugins>

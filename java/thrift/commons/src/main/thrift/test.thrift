@@ -1,14 +1,14 @@
 namespace java flink.parquet.thrift
-
+/*
 enum PhoneType {
     MOBILE = 0;
     HOME = 1;
     WORK = 2;
 }
-
+*/
 struct PhoneNumber {
 	1: required string number,
-	2: optional PhoneType type = PhoneType.HOME;
+	//2: optional PhoneType type = PhoneType.HOME;
 }
 
 struct Person {

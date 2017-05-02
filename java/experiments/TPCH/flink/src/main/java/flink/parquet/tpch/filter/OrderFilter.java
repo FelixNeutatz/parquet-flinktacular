@@ -33,7 +33,6 @@ public class OrderFilter implements UnboundRecordFilter {
 
 	public class BeforeDate implements ColumnPredicates.PredicateFunction<String> {
 
-		@Override
 		public boolean functionToApply(String input) {
 			DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 			Date date = null;

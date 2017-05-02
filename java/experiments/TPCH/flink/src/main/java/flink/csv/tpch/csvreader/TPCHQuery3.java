@@ -109,7 +109,6 @@ public class TPCHQuery3 {
 		// Filter market segment "AUTOMOBILE"
 		customers = customers.filter(
 			new FilterFunction<Customer>() {
-				@Override
 				public boolean filter(Customer c) {
 					return c.getMktsegment().equals("AUTOMOBILE");
 				}
@@ -121,7 +120,6 @@ public class TPCHQuery3 {
 				private final DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				private final Date date = format.parse("1995-03-12");
 
-				@Override
 				public boolean filter(Order o) throws ParseException {
 					return format.parse(o.getOrderdate()).before(date);
 				}
@@ -133,7 +131,6 @@ public class TPCHQuery3 {
 				private final DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				private final Date date = format.parse("1995-03-12");
 
-				@Override
 				public boolean filter(Lineitem l) throws ParseException {
 					return format.parse(l.getShipdate()).after(date);
 				}
@@ -144,7 +141,6 @@ public class TPCHQuery3 {
 			customers.join(orders).where(0).equalTo(1)
 				.with(
 					new JoinFunction<Customer, Order, ShippingPriorityItem>() {
-						@Override
 						public ShippingPriorityItem join(Customer c, Order o) {
 							return new ShippingPriorityItem(o.getOrderKey(), 0.0, o.getOrderdate(),
 								o.getShippriority());
@@ -156,7 +152,6 @@ public class TPCHQuery3 {
 			customerWithOrders.join(lineitems).where(0).equalTo(0)
 				.with(
 					new JoinFunction<ShippingPriorityItem, Lineitem, ShippingPriorityItem>() {
-						@Override
 						public ShippingPriorityItem join(ShippingPriorityItem i, Lineitem l) {
 							i.setRevenue(l.getExtendedprice() * (1 - l.getDiscount()));
 							return i;

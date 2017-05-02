@@ -43,17 +43,17 @@ public class CSVToParquet {
         
 		
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        env.setDegreeOfParallelism(splitNumber);
+        env.setDefaultLocalParallelism(splitNumber);
         createCustomers(env);
         env.execute("convert customers");
 		
         final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-        env2.setDegreeOfParallelism(splitNumber);
+        env2.setDefaultLocalParallelism(splitNumber);
         createOrders(env2);
         env2.execute("convert orders");
 		
 		final ExecutionEnvironment env3 = ExecutionEnvironment.getExecutionEnvironment();
-        env3.setDegreeOfParallelism(splitNumber);
+        env3.setDefaultLocalParallelism(splitNumber);
         createLineitems(env3);
         env3.execute("convert lineitems");        
     }
@@ -143,7 +143,6 @@ public class CSVToParquet {
     }
         
     public static class OrdersToParquet implements MapFunction<Orders, Tuple2<Void,OrderTable>> {
-        @Override
         public Tuple2<Void, OrderTable> map(Orders csv) {
             OrderTable orders = new OrderTable();
             orders.setID(csv.f0);
@@ -160,7 +159,6 @@ public class CSVToParquet {
     }
 
     public static class CustomerToParquet implements MapFunction<Customer, Tuple2<Void,CustomerTable>> {
-        @Override
         public Tuple2<Void,CustomerTable> map(Customer csv) {
             CustomerTable customer = new CustomerTable();
             customer.setID(csv.f0);
@@ -177,7 +175,6 @@ public class CSVToParquet {
     }
 
     public static class LineitemToParquet implements MapFunction<Lineitem, Tuple2<Void,LineitemTable>> {
-        @Override
         public Tuple2<Void,LineitemTable> map(Lineitem csv) {
             LineitemTable lineitem = new LineitemTable();
             lineitem.setORDERKEY(csv.f0);

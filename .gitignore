@@ -27,6 +27,12 @@ scala/protobuf/flink/target/
 scala/protobuf/newpath/
 scala/protobuf/target/
 tutorial/target/
+.idea
+.classpath
+.project
+.settings/
+target/
+*.cache-main
 *.iml
 *~
 

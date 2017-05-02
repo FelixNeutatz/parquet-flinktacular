@@ -23,7 +23,7 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>flink.parquet.proto</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>protobuf-parent-scala</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>commons</module>
@@ -182,29 +182,29 @@ under the License.
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>org.scalastyle</groupId>
-                <artifactId>scalastyle-maven-plugin</artifactId>
-                <version>0.5.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <verbose>false</verbose>
-                    <failOnViolation>true</failOnViolation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <failOnWarning>false</failOnWarning>
-                    <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
-                    <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
-                    <configLocation>${project.basedir}/../tools/maven/scalastyle-config.xml</configLocation>
-                    <outputFile>${project.basedir}/scalastyle-output.xml</outputFile>
-                    <outputEncoding>UTF-8</outputEncoding>
-                </configuration>
-            </plugin>
+<!--             <plugin> -->
+<!--                 <groupId>org.scalastyle</groupId> -->
+<!--                 <artifactId>scalastyle-maven-plugin</artifactId> -->
+<!--                 <version>0.5.0</version> -->
+<!--                 <executions> -->
+<!--                     <execution> -->
+<!--                         <goals> -->
+<!--                             <goal>check</goal> -->
+<!--                         </goals> -->
+<!--                     </execution> -->
+<!--                 </executions> -->
+<!--                 <configuration> -->
+<!--                     <verbose>false</verbose> -->
+<!--                     <failOnViolation>true</failOnViolation> -->
+<!--                     <includeTestSourceDirectory>true</includeTestSourceDirectory> -->
+<!--                     <failOnWarning>false</failOnWarning> -->
+<!--                     <sourceDirectory>${basedir}/src/main/scala</sourceDirectory> -->
+<!--                     <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory> -->
+<!--                     <configLocation>${project.basedir}/../tools/maven/scalastyle-config.xml</configLocation> -->
+<!--                     <outputFile>${project.basedir}/scalastyle-output.xml</outputFile> -->
+<!--                     <outputEncoding>UTF-8</outputEncoding> -->
+<!--                 </configuration> -->
+<!--             </plugin> -->
 
         </plugins>
     </build>

@@ -22,11 +22,11 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>flink.parquet.thrift</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>TPCDS-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>commons</module>
-        <module>flink</module>
+        <module>TPCDS-commons</module>
+        <module>TPCDS-flink</module>
     </modules>
     <packaging>pom</packaging>
 

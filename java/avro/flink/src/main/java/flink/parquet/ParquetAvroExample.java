@@ -18,7 +18,6 @@
 
 package flink.parquet;
 
-import com.google.common.collect.Lists;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
@@ -32,14 +31,15 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import parquet.filter2.predicate.FilterPredicate;
-import parquet.hadoop.ParquetInputFormat;
-import parquet.hadoop.ParquetOutputFormat;
-import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.avro.AvroParquetOutputFormat;
-import parquet.avro.AvroParquetInputFormat;
+import org.apache.parquet.filter2.predicate.FilterPredicate;
+import org.apache.parquet.hadoop.ParquetInputFormat;
+import org.apache.parquet.hadoop.ParquetOutputFormat;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.avro.AvroParquetOutputFormat;
+import org.apache.parquet.avro.AvroParquetInputFormat;
 
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,11 +47,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import flink.parquet.avro.*;
-import parquet.io.api.Binary;
+import org.apache.parquet.io.api.Binary;
 
-import static parquet.filter2.predicate.FilterApi.binaryColumn;
-import static parquet.filter2.predicate.FilterApi.eq;
-import static parquet.filter2.predicate.Operators.BinaryColumn;
+import static org.apache.parquet.filter2.predicate.FilterApi.binaryColumn;
+import static org.apache.parquet.filter2.predicate.FilterApi.eq;
+import static org.apache.parquet.filter2.predicate.Operators.BinaryColumn;
 
 
 public class ParquetAvroExample {
@@ -62,22 +62,20 @@ public class ParquetAvroExample {
 		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 		Person person = generateSampleObject();
 		DataSet<Tuple2<Void, Person>> output = putObjectIntoDataSet(env, person);
-		writeAvro(output, "newpath");
+		writeAvro(output, "/tmp/newpath");
 		output.print();
-		env.execute("Output");
 
 		//input
-		final ExecutionEnvironment env2 = ExecutionEnvironment.getExecutionEnvironment();
-		DataSet<Tuple2<Void, Person>> input = readAvro(env2, "newpath");
+		DataSet<Tuple2<Void, Person>> input = readAvro(env, "/tmp/newpath");
 		input.print();
-		env2.execute("Input");
 	}
 
 
 	public static Person generateSampleObject() {
 		Person person = new Person();
-		person.id = 42;
-		person.name = "Felix";
+		person.setId(42);
+		person.setName("Felix");
+		person.setEmail("test@test.com");
 
 		List<PhoneNumber> pList = new ArrayList<PhoneNumber>();
 		pList.add(new PhoneNumber("123456", PhoneType.WORK));
@@ -86,9 +84,9 @@ public class ParquetAvroExample {
 	}
 
 	public static DataSet<Tuple2<Void, Person>> putObjectIntoDataSet(ExecutionEnvironment env, Person person) {
-		List l = Arrays.asList(new Tuple2<Void, Person>(null, person));
-		TypeInformation t = new TupleTypeInfo<Tuple2<Void, Person>>(TypeExtractor.getForClass(Void.class),
-			TypeExtractor.getForClass(Person.class));
+		List<Tuple2<Void, Person>> l = Arrays.asList(new Tuple2<Void, Person>(null, person));
+		TypeInformation<Tuple2<Void, Person>> t = new TupleTypeInfo<Tuple2<Void, Person>>(
+				TypeExtractor.getForClass(Void.class), TypeExtractor.getForClass(Person.class));
 
 		DataSet<Tuple2<Void, Person>> data = env.fromCollection(l, t);
 
@@ -100,7 +98,8 @@ public class ParquetAvroExample {
 		Job job = Job.getInstance();
 
 		// Set up Hadoop Output Format
-		HadoopOutputFormat hadoopOutputFormat = new HadoopOutputFormat(new AvroParquetOutputFormat(), job);
+		HadoopOutputFormat<Void, Person> hadoopOutputFormat = new HadoopOutputFormat<>(
+				new AvroParquetOutputFormat<Person>(), job);
 
 		FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
@@ -116,32 +115,21 @@ public class ParquetAvroExample {
 		IOException {
 		Job job = Job.getInstance();
 
-		HadoopInputFormat hadoopInputFormat = new HadoopInputFormat(new AvroParquetInputFormat(), Void.class, Person
-			.class, job);
+		HadoopInputFormat<Void, Person> hadoopInputFormat = new HadoopInputFormat<>(
+				new AvroParquetInputFormat<Person>(), Void.class, Person.class, job);
 
 		FileInputFormat.addInputPath(job, new Path(inputPath));
 
-		// schema projection: don't read type of phonenumber     
-		Schema phone = Schema.createRecord("PhoneNumber", null, null, false);
-		phone.setFields(Arrays.asList(
-			new Schema.Field("number", Schema.create(Schema.Type.BYTES), null, null)));
-
-		Schema array = Schema.createArray(phone);
-		Schema union = Schema.createUnion(Lists.newArrayList(Schema.create(Schema.Type.BYTES), Schema.create(Schema
-			.Type
-			.NULL)));
-
-
-		Schema projection = Schema.createRecord("Person", null, null, false);
-		projection.setFields(
-			Arrays.asList(
-				new Schema.Field("name", Schema.create(Schema.Type.BYTES), null, null),
-				new Schema.Field("id", Schema.create(Schema.Type.INT), null, null),
-				new Schema.Field("email", union, null, null),
-				new Schema.Field("phone", array, null, null)
-			)
-		);
-
+		List<Field> personProjFields =  new ArrayList<>();
+		personProjFields.add(getPersonField(Person.SCHEMA$.getField("id")));
+		personProjFields.add(getPersonField(Person.SCHEMA$.getField("name")));
+		personProjFields.add(getPersonField(Person.SCHEMA$.getField("email")));
+		Schema projection = Schema.createRecord(Person.SCHEMA$.getName(), 
+				Person.SCHEMA$.getDoc(),
+				Person.SCHEMA$.getNamespace(), 
+				false, 
+				personProjFields);
+		
 		AvroParquetInputFormat.setRequestedProjection(job, projection);
 
 		// push down predicates: get all persons with name = "Felix"
@@ -152,5 +140,13 @@ public class ParquetAvroExample {
 		DataSet<Tuple2<Void, Person>> data = env.createInput(hadoopInputFormat);
 
 		return data;
+	}
+
+
+	private static Schema.Field getPersonField(Field field) {
+		Schema.Field ret = new Schema.Field(
+				field.name(), field.schema(), field.doc(),
+				field.defaultVal(), field.order());
+		return ret;
 	}
 }

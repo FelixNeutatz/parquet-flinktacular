@@ -125,7 +125,6 @@ public class TPCHQuery3Parquet {
 			customers.join(orders).where(0).equalTo(1)
 				.with(
 					new JoinFunction<Customer, Order, ShippingPriorityItem>() {
-						@Override
 						public ShippingPriorityItem join(Customer c, Order o) {
 							return new ShippingPriorityItem(o.getOrderKey(), 0.0, o.getOrderdate(),
 								o.getShippriority());
@@ -137,7 +136,6 @@ public class TPCHQuery3Parquet {
 			customerWithOrders.join(lineitems).where(0).equalTo(0)
 				.with(
 					new JoinFunction<ShippingPriorityItem, Lineitem, ShippingPriorityItem>() {
-						@Override
 						public ShippingPriorityItem join(ShippingPriorityItem i, Lineitem l) {
 							i.setRevenue(l.getExtendedprice() * (1 - l.getDiscount()));
 							return i;
@@ -229,7 +227,6 @@ public class TPCHQuery3Parquet {
 
 	private static final class MapLineitems implements MapFunction<Tuple2<Void, LineitemTable>, Lineitem> {
 
-		@Override
 		public Lineitem map(Tuple2<Void, LineitemTable> value) {
 			Lineitem tuple = new Lineitem();
 			tuple.f0 = value.f1.getORDERKEY();
@@ -243,7 +240,6 @@ public class TPCHQuery3Parquet {
 
 	private static final class MapOrders implements MapFunction<Tuple2<Void, OrderTable>, Order> {
 
-		@Override
 		public Order map(Tuple2<Void, OrderTable> value) {
 			Order tuple = new Order();
 			tuple.f0 = value.f1.getID();
@@ -257,7 +253,6 @@ public class TPCHQuery3Parquet {
 
 	private static final class MapCustomers implements MapFunction<Tuple2<Void, CustomerTable>, Customer> {
 
-		@Override
 		public Customer map(Tuple2<Void, CustomerTable> value) {
 			Customer tuple = new Customer();
 			tuple.f0 = value.f1.getID();
